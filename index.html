@@ -1,0 +1,3549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>T.Koi Fighter!! — HALLO Winter School Edition (by T.Koi)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Rajdhani:wght@600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            user-select: none;
+            -webkit-user-select: none;
+            box-sizing: border-box;
+        }
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #040b18;
+            font-family: 'Rajdhani', sans-serif;
+            color: #ffffff;
+        }
+        .font-arcade {
+            font-family: 'Orbitron', sans-serif;
+        }
+        #game-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            display: block;
+        }
+        .ui-layer {
+            position: absolute;
+            inset: 0;
+            z-index: 10;
+            pointer-events: none;
+        }
+        .interactive {
+            pointer-events: auto;
+        }
+
+        /* Winter Frosted Glassmorphism Theme */
+        .winter-glass {
+            background: linear-gradient(145deg, rgba(12, 28, 56, 0.84), rgba(5, 13, 30, 0.92));
+            border: 1px solid rgba(125, 211, 252, 0.35);
+            box-shadow: 0 8px 32px rgba(0, 12, 36, 0.72), inset 0 1px 0 rgba(224, 242, 254, 0.18);
+            backdrop-filter: blur(12px);
+        }
+        body.classic-theme .winter-glass {
+            background: linear-gradient(145deg, rgba(20, 20, 34, 0.88), rgba(8, 10, 18, 0.94));
+            border: 1px solid rgba(245, 158, 11, 0.32);
+            box-shadow: 0 8px 28px rgba(0, 0, 0, 0.75);
+        }
+
+        /* Shimmering Frosted Winter Badge */
+        .winter-badge-shimmer {
+            background: linear-gradient(90deg, #0284c7, #38bdf8, #e0f2fe, #fde047, #38bdf8, #0284c7);
+            background-size: 250% 100%;
+            animation: frostShimmer 4s linear infinite;
+        }
+        @keyframes frostShimmer {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 250% 50%; }
+        }
+
+        /* Gentle Falling Menu Snowflakes */
+        #menu-snow-layer {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 15;
+            overflow: hidden;
+        }
+        .menu-snowflake {
+            position: absolute;
+            top: -12px;
+            border-radius: 9999px;
+            background: radial-gradient(circle, #ffffff 0%, rgba(186, 230, 253, 0.7) 65%, transparent 100%);
+            animation: snowFall linear infinite;
+        }
+        @keyframes snowFall {
+            0% { transform: translateY(-10px) translateX(0px); opacity: 0; }
+            12% { opacity: 0.85; }
+            88% { opacity: 0.75; }
+            100% { transform: translateY(105vh) translateX(40px); opacity: 0; }
+        }
+
+        /* Tekken Slanted Health Bars */
+        .skew-bar-left { transform: skewX(-18deg); }
+        .skew-bar-right { transform: skewX(18deg); }
+        .rage-glow { animation: ragePulse 0.55s infinite alternate; }
+        @keyframes ragePulse {
+            0% { box-shadow: 0 0 12px #ff003c, inset 0 0 10px #ff003c; border-color: #ff4d6d; }
+            100% { box-shadow: 0 0 28px #ff0000, 0 0 46px #38bdf8, inset 0 0 18px #ff003c; border-color: #ffffff; }
+        }
+
+        /* PS5 Symbol Button Styling */
+        .ps5-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 9999px;
+            background: radial-gradient(circle at 30% 30%, #2a3a58, #0f172a);
+            border: 2px solid rgba(186, 230, 253, 0.28);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6), inset 0 1px 2px rgba(255, 255, 255, 0.25);
+            transition: transform 0.08s, box-shadow 0.08s, border-color 0.1s;
+        }
+        .ps5-btn:active, .ps5-btn.active {
+            transform: scale(0.92);
+            border-color: #38bdf8;
+            box-shadow: 0 0 16px rgba(56, 189, 248, 0.8);
+        }
+
+        /* Character Card Styling */
+        .char-card {
+            transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+            background: linear-gradient(145deg, rgba(14, 30, 56, 0.9), rgba(7, 13, 28, 0.96));
+        }
+        .char-card.winter-exclusive-card {
+            background: linear-gradient(145deg, rgba(12, 48, 86, 0.94), rgba(14, 24, 52, 0.96));
+            box-shadow: inset 0 0 14px rgba(56, 189, 248, 0.22);
+        }
+        .char-card:hover {
+            transform: translateY(-3px) scale(1.03);
+        }
+        .char-card.selected-p1 {
+            border-color: #38bdf8 !important;
+            box-shadow: 0 0 22px rgba(56, 189, 248, 0.65), inset 0 0 14px rgba(56, 189, 248, 0.3);
+        }
+        .char-card.selected-p2 {
+            border-color: #f43f5e !important;
+            box-shadow: 0 0 22px rgba(244, 63, 94, 0.65), inset 0 0 14px rgba(244, 63, 94, 0.3);
+        }
+        .char-card.selected-both {
+            border-color: #facc15 !important;
+            box-shadow: 0 0 26px rgba(250, 204, 21, 0.75), inset 0 0 15px rgba(250, 204, 21, 0.35);
+        }
+
+        /* Floating Damage Popups */
+        .dmg-popup {
+            position: absolute;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 900;
+            pointer-events: none;
+            animation: floatUpFade 0.78s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            text-shadow: 0 3px 10px rgba(0, 0, 0, 0.95);
+        }
+        @keyframes floatUpFade {
+            0% { opacity: 1; transform: translate(-50%, 0) scale(0.6); }
+            25% { opacity: 1; transform: translate(-50%, -24px) scale(1.2); }
+            100% { opacity: 0; transform: translate(-50%, -68px) scale(0.9); }
+        }
+
+        /* Cinematic Letterbox bars for Rage Art */
+        .letterbox-bar { transition: height 0.25s ease-out; }
+
+        /* Equalizer Animation Bars for BGM Widget */
+        @keyframes eqBounce {
+            0% { height: 3px; }
+            100% { height: 12px; }
+        }
+        .eq-bar {
+            width: 2.5px;
+            background: #38bdf8;
+            border-radius: 2px;
+            display: inline-block;
+            animation: eqBounce 0.35s infinite alternate ease-in-out;
+        }
+        .eq-bar.paused {
+            animation: none;
+            height: 3px !important;
+            background: #64748b;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: #060d1f; }
+        ::-webkit-scrollbar-thumb { background: #38bdf8; border-radius: 3px; }
+    </style>
+</head>
+<body>
+
+    <!-- 3D WebGL Arena Canvas -->
+    <canvas id="game-canvas"></canvas>
+
+    <!-- Gentle Menu Snowfall Particle Overlay -->
+    <div id="menu-snow-layer"></div>
+
+    <!-- Floating Damage & Hit Spark Text Container -->
+    <div id="floating-fx-container" class="ui-layer overflow-hidden"></div>
+
+    <!-- Cinematic Rage Art Letterbox Bars -->
+    <div id="letterbox-top" class="fixed top-0 left-0 right-0 h-0 bg-slate-950 z-20 pointer-events-none letterbox-bar border-b border-cyan-400/50"></div>
+    <div id="letterbox-bottom" class="fixed bottom-0 left-0 right-0 h-0 bg-slate-950 z-20 pointer-events-none letterbox-bar border-t border-cyan-400/50"></div>
+
+    <!-- Mandatory Bottom-Right Watermark -->
+    <div class="fixed bottom-2 right-3 z-50 pointer-events-none flex items-center gap-2 opacity-85">
+        <span class="text-xs md:text-sm font-arcade tracking-widest text-cyan-300 drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)]">
+            T.KOI FIGHTER!! <span class="text-amber-300 font-bold">(by T.Koi)</span>
+        </span>
+    </div>
+
+    <!-- TOP CONTROLLER, BGM & INPUT STATUS BAR -->
+    <div class="fixed top-1.5 left-1/2 -translate-x-1/2 z-40 flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 px-3 py-1 rounded-full winter-glass text-[11px] sm:text-xs interactive w-max max-w-[98vw]">
+        <div class="flex items-center gap-1.5">
+            <span id="gp1-dot" class="w-2.5 h-2.5 rounded-full bg-slate-600 inline-block"></span>
+            <span id="gp1-label" class="font-bold text-slate-300">PS5 Pad 1: Off</span>
+        </div>
+        <span class="text-slate-600 hidden md:inline">|</span>
+        <div class="flex items-center gap-1.5 hidden md:flex">
+            <span id="gp2-dot" class="w-2.5 h-2.5 rounded-full bg-slate-600 inline-block"></span>
+            <span id="gp2-label" class="font-bold text-slate-300">PS5 Pad 2: Off</span>
+        </div>
+        <button id="btn-pad-assign" onclick="togglePad1Assignment()" class="px-2 py-0.5 rounded-full bg-sky-950/90 hover:bg-sky-800 text-cyan-200 border border-cyan-400/50 font-semibold transition" title="Toggle which player PS5 Controller 1 controls">
+            Pad 1 Controls: <span id="pad-assign-text" class="text-amber-300 font-bold">P1</span>
+        </button>
+
+        <!-- BGM SYNTHESIZER CONTROL WIDGET -->
+        <div class="flex items-center gap-1 bg-slate-950/90 px-2 py-0.5 rounded-full border border-cyan-400/40">
+            <div class="flex items-end gap-0.5 h-3 px-0.5" id="bgm-eq">
+                <span class="eq-bar" style="animation-delay:0s"></span>
+                <span class="eq-bar" style="animation-delay:0.12s"></span>
+                <span class="eq-bar" style="animation-delay:0.24s"></span>
+            </div>
+            <button onclick="toggleBGM()" id="btn-bgm-toggle" class="text-[11px] font-arcade font-bold text-cyan-300 hover:text-white transition">
+                BGM: ON
+            </button>
+            <span class="text-slate-600">|</span>
+            <button onclick="cycleBGMTrack()" id="btn-bgm-track" class="text-[11px] font-bold text-amber-300 hover:text-amber-200 transition" title="Switch Procedural Synth Track">
+                ❄️ HALLO Winter Overdrive ⏭
+            </button>
+        </div>
+
+        <button onclick="toggleControlsModal()" class="px-2 py-0.5 rounded-full bg-slate-900/90 hover:bg-slate-800 text-sky-100 border border-sky-400/40 font-semibold transition">
+            🎮 Controls
+        </button>
+        <button onclick="toggleTouchControls()" id="btn-touch-toggle" class="px-2 py-0.5 rounded-full bg-slate-900/90 hover:bg-slate-800 text-sky-100 border border-sky-400/40 font-semibold transition">
+            📱 Touch: OFF
+        </button>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- CHARACTER SELECT & MAIN MENU OVERLAY       -->
+    <!-- ========================================== -->
+    <div id="menu-screen" class="ui-layer interactive flex flex-col justify-between p-2 md:p-3.5 pt-11 md:pt-11 bg-gradient-to-b from-slate-950/80 via-transparent to-slate-950/95 overflow-y-auto">
+        
+        <!-- Header: Branding, Season Toggle & Mode Selection -->
+        <div class="max-w-7xl w-full mx-auto flex flex-col lg:flex-row items-center justify-between gap-2 px-3 py-1.5 rounded-2xl winter-glass">
+            <div class="flex flex-col sm:flex-row sm:items-center gap-2 text-center sm:text-left">
+                <div>
+                    <div class="flex flex-wrap items-center justify-center sm:justify-start gap-1.5">
+                        <span id="season-banner-badge" class="px-2.5 py-0.5 text-[10px] font-arcade winter-badge-shimmer text-slate-950 font-black rounded-full tracking-wider shadow-[0_0_12px_rgba(56,189,248,0.7)]">
+                            ❄️ HALLO WINTER SCHOOL EDITION ❄️
+                        </span>
+                        <span class="text-[10px] text-cyan-300 font-bold tracking-widest uppercase">25 FIGHTERS • 3 WINTER SKINS</span>
+                    </div>
+                    <h1 class="text-2xl sm:text-3xl font-arcade font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-sky-200 to-amber-300 drop-shadow-[0_3px_12px_rgba(56,189,248,0.45)]">
+                        T.Koi Fighter!!
+                    </h1>
+                </div>
+            </div>
+
+            <!-- Theme Toggle + Game Mode + AI Difficulty -->
+            <div class="flex flex-wrap items-center justify-center gap-1.5">
+                <!-- Season Edition Toggle -->
+                <button onclick="toggleSeasonTheme()" id="btn-season-toggle" class="px-3 py-1.5 rounded-xl font-arcade text-[11px] font-black transition bg-gradient-to-r from-sky-500 to-cyan-400 text-slate-950 shadow-[0_0_15px_rgba(56,189,248,0.6)] border border-white/60">
+                    ❄️ Winter Edition
+                </button>
+
+                <div class="flex flex-wrap items-center gap-1 bg-slate-950/80 p-1 rounded-xl border border-sky-400/30">
+                    <button onclick="setGameMode('cpu')" id="mode-cpu" class="px-2.5 py-1 rounded-lg font-arcade text-[11px] font-bold transition bg-cyan-500 text-slate-950 shadow-md">
+                        1P VS CPU
+                    </button>
+                    <button onclick="setGameMode('versus')" id="mode-versus" class="px-2.5 py-1 rounded-lg font-arcade text-[11px] font-bold transition text-slate-300 hover:bg-slate-800">
+                        2P VERSUS
+                    </button>
+                    <button onclick="setGameMode('practice')" id="mode-practice" class="px-2.5 py-1 rounded-lg font-arcade text-[11px] font-bold transition text-slate-300 hover:bg-slate-800">
+                        PRACTICE
+                    </button>
+
+                    <div id="cpu-diff-box" class="flex items-center gap-1 pl-1.5 border-l border-slate-700">
+                        <span class="text-[10px] text-sky-300 font-bold uppercase">AI:</span>
+                        <select id="ai-difficulty" onchange="updateAIDifficulty(this.value)" class="bg-slate-950 text-amber-300 text-[11px] font-bold px-1.5 py-0.5 rounded border border-sky-500/40 focus:outline-none">
+                            <option value="easy">EASY</option>
+                            <option value="normal" selected>NORMAL</option>
+                            <option value="hard">HARD</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Middle Preview Panel: P1 3D Showcase | Center VS & 4-Stage Picker | P2 3D Showcase -->
+        <div class="max-w-7xl w-full mx-auto grid grid-cols-1 md:grid-cols-12 gap-2.5 my-auto py-1 items-end">
+            
+            <!-- P1 Info Card & 3D Preview Controls -->
+            <div class="md:col-span-4 flex flex-col gap-1">
+                <div class="flex flex-wrap items-center justify-between gap-1 winter-glass rounded-lg px-2 py-1">
+                    <span class="text-[10px] font-arcade font-bold text-cyan-300 flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span> P1 3D PEDESTAL
+                    </span>
+                    <div class="flex items-center gap-1">
+                        <button id="p1-skin-toggle" onclick="toggleFighterWinterSkin(1)" class="hidden px-2 py-0.5 rounded bg-sky-400/25 hover:bg-sky-400/45 text-sky-100 border border-sky-300/70 text-[10px] font-arcade font-bold transition">
+                            ❄️ WINTER SKIN
+                        </button>
+                        <button onclick="triggerPreviewPose(1, 'special')" class="px-2 py-0.5 rounded bg-cyan-500/20 hover:bg-cyan-500/40 text-cyan-200 border border-cyan-400/50 text-[10px] font-arcade font-bold transition">
+                            ⚡ Test Pose
+                        </button>
+                        <button id="p1-rot-btn" onclick="togglePreviewSpin(1)" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-600 text-[10px] font-bold transition" title="Toggle 360° Turntable Rotation">
+                            🔄 360°
+                        </button>
+                    </div>
+                </div>
+
+                <div class="winter-glass border-l-4 border-l-cyan-400 rounded-r-xl p-2.5 shadow-2xl">
+                    <div class="flex items-center justify-between gap-1">
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-[10px] font-arcade font-bold text-cyan-400 tracking-widest">PLAYER 1</span>
+                            <span id="p1-winter-tag" class="hidden px-1.5 py-0.2 text-[9px] font-arcade font-black bg-sky-400 text-slate-950 rounded">❄️ WINTER ED.</span>
+                        </div>
+                        <span id="p1-style-badge" class="text-[10px] px-2 py-0.5 rounded bg-sky-950 text-cyan-200 border border-cyan-500/40 font-semibold truncate max-w-[55%]">Frost Blade Arts</span>
+                    </div>
+                    <h2 id="p1-select-name" class="text-xl md:text-2xl font-arcade font-black text-white mt-0.5 leading-tight">T.RYOMA</h2>
+                    <p id="p1-select-title" class="text-[11px] text-amber-300 font-bold tracking-wider uppercase">"Frost Blade Prodigy"</p>
+                    <p id="p1-select-desc" class="text-[11px] text-sky-100/85 mt-0.5 leading-snug h-8 overflow-hidden"></p>
+                    <div class="space-y-1 mt-1.5 text-[10px]">
+                        <div class="flex items-center gap-2">
+                            <span class="w-16 text-sky-200/75 font-bold">POWER</span>
+                            <div class="flex-1 h-1.5 bg-slate-900 rounded-full overflow-hidden"><div id="p1-stat-pow" class="h-full bg-gradient-to-r from-cyan-300 to-blue-500"></div></div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-16 text-sky-200/75 font-bold">SPEED</span>
+                            <div class="flex-1 h-1.5 bg-slate-900 rounded-full overflow-hidden"><div id="p1-stat-spd" class="h-full bg-gradient-to-r from-cyan-300 to-emerald-400"></div></div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-16 text-sky-200/75 font-bold">TECH</span>
+                            <div class="flex-1 h-1.5 bg-slate-900 rounded-full overflow-hidden"><div id="p1-stat-rng" class="h-full bg-gradient-to-r from-sky-300 to-indigo-400"></div></div>
+                        </div>
+                    </div>
+                    <div class="mt-1.5 pt-1 border-t border-sky-400/20 flex items-center justify-between text-[11px]">
+                        <span class="text-sky-200/70 font-semibold">RAGE ART:</span>
+                        <span id="p1-select-special" class="text-cyan-300 font-arcade font-bold truncate ml-1">❄️ Sub-Zero Dragon Fang</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Center VS, Active Cursor & 4-Stage Selector -->
+            <div class="md:col-span-4 flex flex-col items-center justify-center text-center py-0.5">
+                <div class="text-3xl md:text-4xl font-arcade font-black italic text-transparent bg-clip-text bg-gradient-to-b from-white via-cyan-300 to-amber-400 drop-shadow-[0_4px_15px_rgba(56,189,248,0.65)]">
+                    VS
+                </div>
+
+                <!-- Active Cursor Selector Toggle -->
+                <div class="flex items-center gap-1 mt-1 winter-glass p-1 rounded-lg">
+                    <button id="cursor-btn-p1" onclick="setActiveSelectCursor(1)" class="px-2.5 py-0.5 rounded text-[11px] font-bold bg-cyan-400 text-slate-950 transition">
+                        Picking: P1
+                    </button>
+                    <button id="cursor-btn-p2" onclick="setActiveSelectCursor(2)" class="px-2.5 py-0.5 rounded text-[11px] font-bold text-slate-200 hover:bg-slate-800 transition">
+                        Picking: P2 / CPU
+                    </button>
+                </div>
+
+                <!-- 4 Playable 3D Stages Selector -->
+                <div class="mt-1.5 winter-glass px-2.5 py-1.5 rounded-xl w-full max-w-sm">
+                    <div class="text-[10px] font-arcade text-cyan-300 tracking-widest uppercase mb-1">❄️ 3D ARENA STAGE SELECT</div>
+                    <div class="grid grid-cols-2 gap-1">
+                        <button onclick="selectStage(0)" id="stage-btn-0" class="px-2 py-1 rounded text-[10px] font-bold bg-cyan-400 text-slate-950 truncate">
+                            ❄️ HALLO Snowy Courtyard
+                        </button>
+                        <button onclick="selectStage(1)" id="stage-btn-1" class="px-2 py-1 rounded text-[10px] font-bold bg-slate-900/90 text-sky-100 hover:bg-slate-800 truncate">
+                            🌌 Aurora Ice Peak
+                        </button>
+                        <button onclick="selectStage(2)" id="stage-btn-2" class="px-2 py-1 rounded text-[10px] font-bold bg-slate-900/90 text-sky-100 hover:bg-slate-800 truncate">
+                            🌙 Frost Dojo Rooftop
+                        </button>
+                        <button onclick="selectStage(3)" id="stage-btn-3" class="px-2 py-1 rounded text-[10px] font-bold bg-slate-900/90 text-sky-100 hover:bg-slate-800 truncate">
+                            ⚡ Classic Neon Dojo
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- P2 Info Card & 3D Preview Controls -->
+            <div class="md:col-span-4 flex flex-col gap-1">
+                <div class="flex flex-wrap items-center justify-between flex-row-reverse gap-1 winter-glass rounded-lg px-2 py-1">
+                    <span class="text-[10px] font-arcade font-bold text-rose-300 flex items-center gap-1.5">
+                        P2 3D PEDESTAL <span class="w-2 h-2 rounded-full bg-rose-400 animate-ping"></span>
+                    </span>
+                    <div class="flex items-center gap-1">
+                        <button id="p2-rot-btn" onclick="togglePreviewSpin(2)" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-600 text-[10px] font-bold transition" title="Toggle 360° Turntable Rotation">
+                            🔄 360°
+                        </button>
+                        <button onclick="triggerPreviewPose(2, 'special')" class="px-2 py-0.5 rounded bg-rose-500/20 hover:bg-rose-500/40 text-rose-200 border border-rose-400/50 text-[10px] font-arcade font-bold transition">
+                            ⚡ Test Pose
+                        </button>
+                        <button id="p2-skin-toggle" onclick="toggleFighterWinterSkin(2)" class="hidden px-2 py-0.5 rounded bg-sky-400/25 hover:bg-sky-400/45 text-sky-100 border border-sky-300/70 text-[10px] font-arcade font-bold transition">
+                            ❄️ WINTER SKIN
+                        </button>
+                    </div>
+                </div>
+
+                <div class="winter-glass border-r-4 border-r-rose-500 rounded-l-xl p-2.5 shadow-2xl text-right">
+                    <div class="flex items-center justify-between flex-row-reverse gap-1">
+                        <div class="flex items-center gap-1.5 flex-row-reverse">
+                            <span id="p2-header-tag" class="text-[10px] font-arcade font-bold text-rose-400 tracking-widest">CPU OPPONENT</span>
+                            <span id="p2-winter-tag" class="hidden px-1.5 py-0.2 text-[9px] font-arcade font-black bg-sky-400 text-slate-950 rounded">❄️ WINTER ED.</span>
+                        </div>
+                        <span id="p2-style-badge" class="text-[10px] px-2 py-0.5 rounded bg-rose-950 text-rose-200 border border-rose-500/40 font-semibold truncate max-w-[55%]">Frost Dragon Arts</span>
+                    </div>
+                    <h2 id="p2-select-name" class="text-xl md:text-2xl font-arcade font-black text-white mt-0.5 leading-tight">T.KOI</h2>
+                    <p id="p2-select-title" class="text-[11px] text-amber-300 font-bold tracking-wider uppercase">"Frost Dragon Grandmaster"</p>
+                    <p id="p2-select-desc" class="text-[11px] text-sky-100/85 mt-0.5 leading-snug h-8 overflow-hidden"></p>
+                    <div class="space-y-1 mt-1.5 text-[10px]">
+                        <div class="flex items-center gap-2 flex-row-reverse">
+                            <span class="w-16 text-sky-200/75 font-bold">POWER</span>
+                            <div class="flex-1 h-1.5 bg-slate-900 rounded-full overflow-hidden"><div id="p2-stat-pow" class="h-full bg-gradient-to-l from-rose-500 to-amber-400 ml-auto"></div></div>
+                        </div>
+                        <div class="flex items-center gap-2 flex-row-reverse">
+                            <span class="w-16 text-sky-200/75 font-bold">SPEED</span>
+                            <div class="flex-1 h-1.5 bg-slate-900 rounded-full overflow-hidden"><div id="p2-stat-spd" class="h-full bg-gradient-to-l from-rose-500 to-cyan-400 ml-auto"></div></div>
+                        </div>
+                        <div class="flex items-center gap-2 flex-row-reverse">
+                            <span class="w-16 text-sky-200/75 font-bold">TECH</span>
+                            <div class="flex-1 h-1.5 bg-slate-900 rounded-full overflow-hidden"><div id="p2-stat-rng" class="h-full bg-gradient-to-l from-rose-500 to-purple-400 ml-auto"></div></div>
+                        </div>
+                    </div>
+                    <div class="mt-1.5 pt-1 border-t border-sky-400/20 flex items-center justify-between flex-row-reverse text-[11px]">
+                        <span class="text-sky-200/70 font-semibold">:RAGE ART</span>
+                        <span id="p2-select-special" class="text-amber-300 font-arcade font-bold truncate mr-1">❄️ Glacier Dragon Overdrive</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom 25-Fighter Roster: Dedicated HALLO Winter Exclusives Row + 20 Core Roster -->
+        <div class="max-w-7xl w-full mx-auto space-y-1.5">
+            <!-- Dedicated Glowing HALLO WINTER EXCLUSIVES Row (5 Fighters) -->
+            <div class="rounded-xl p-1.5 border border-cyan-400/50 bg-sky-950/60 shadow-[0_0_20px_rgba(56,189,248,0.2)]">
+                <div class="flex items-center justify-between px-1 mb-1">
+                    <span class="text-[10px] font-arcade font-black text-cyan-200 tracking-widest uppercase">❄️ HALLO WINTER EXCLUSIVES (5 NEW FIGHTERS)</span>
+                    <span class="text-[10px] text-amber-300 font-bold">Left-Click: P1 • Right-Click: P2 • ❄️ = Winter Skin Available</span>
+                </div>
+                <div id="winter-exclusive-grid" class="grid grid-cols-2 sm:grid-cols-5 gap-1.5"></div>
+            </div>
+
+            <!-- Original 20-Fighter Compact 10x2 Roster Grid -->
+            <div id="roster-grid" class="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-10 gap-1"></div>
+
+            <!-- Start Battle & Randomize Action Row -->
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-2 pt-0.5">
+                <button onclick="startMatch()" class="w-full sm:w-auto px-9 py-2 rounded-xl font-arcade font-black text-sm md:text-base tracking-wider bg-gradient-to-r from-cyan-400 via-sky-500 to-amber-400 hover:from-cyan-300 hover:to-amber-300 text-slate-950 shadow-[0_0_28px_rgba(56,189,248,0.65)] border border-white/70 transform hover:scale-105 active:scale-95 transition">
+                    ⚔️ START BATTLE (ENTER / ✕)
+                </button>
+                <button onclick="randomizeFighters()" class="px-4 py-2 rounded-xl font-arcade font-bold text-xs tracking-wider winter-glass hover:bg-sky-900/80 text-sky-100 transition">
+                    🎲 RANDOM SELECT
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- IN-GAME FIGHT HUD                          -->
+    <!-- ========================================== -->
+    <div id="fight-hud" class="ui-layer hidden flex-col justify-between p-3 md:p-5 pt-10 md:pt-11">
+        
+        <!-- Top Health, Timer, Round Orbs & Rage Indicators -->
+        <div class="max-w-6xl w-full mx-auto">
+            <div class="grid grid-cols-11 items-start gap-2">
+                
+                <!-- PLAYER 1 HUD (Left 5 cols) -->
+                <div class="col-span-5 flex flex-col">
+                    <div class="flex items-end justify-between mb-1 px-1">
+                        <div class="flex items-center gap-2">
+                            <span id="hud-p1-name" class="text-base md:text-2xl font-arcade font-black tracking-wide text-white drop-shadow">T.RYOMA</span>
+                            <span id="hud-p1-rage-badge" class="hidden px-2 py-0.5 text-[10px] font-arcade font-black bg-gradient-to-r from-red-600 to-cyan-500 text-white rounded animate-pulse shadow-[0_0_12px_#38bdf8]">
+                                🔥 RAGE! R1/R2 or R
+                            </span>
+                        </div>
+                        <div class="flex items-center gap-1.5" id="hud-p1-orbs"></div>
+                    </div>
+
+                    <div id="hud-p1-bar-frame" class="h-6 md:h-7 w-full bg-slate-950/90 border-2 border-cyan-300/85 rounded-sm p-0.5 skew-bar-left shadow-[0_0_20px_rgba(0,0,0,0.85)] relative overflow-hidden">
+                        <div id="hud-p1-hp-trail" class="h-full bg-rose-500/85 transition-all duration-500 ease-out absolute top-0 right-0" style="width: 100%;"></div>
+                        <div id="hud-p1-hp" class="h-full bg-gradient-to-l from-white via-cyan-400 to-blue-600 transition-all duration-100 relative ml-auto" style="width: 100%;"></div>
+                    </div>
+
+                    <div class="mt-1.5 flex items-center gap-2">
+                        <div class="flex-1 h-2.5 bg-slate-950/90 border border-sky-400/40 skew-bar-left p-0.5 overflow-hidden">
+                            <div id="hud-p1-energy" class="h-full bg-gradient-to-r from-sky-400 via-amber-300 to-white transition-all duration-100" style="width: 50%;"></div>
+                        </div>
+                        <span id="hud-p1-energy-text" class="text-[11px] font-arcade font-bold text-amber-300 w-16 text-right">RAGE 50%</span>
+                    </div>
+
+                    <div id="hud-p1-combo" class="mt-3 pl-2 transition-transform duration-150 opacity-0 pointer-events-none">
+                        <div id="hud-p1-combo-hits" class="text-3xl md:text-5xl font-arcade font-black italic text-cyan-300 drop-shadow-[0_4px_12px_rgba(56,189,248,0.85)]">3 HITS</div>
+                        <div id="hud-p1-combo-dmg" class="text-xs md:text-sm font-arcade font-bold text-amber-300 tracking-widest uppercase">42 DAMAGE</div>
+                    </div>
+                </div>
+
+                <!-- CENTER TIMER & ROUND DISPLAY (1 col) -->
+                <div class="col-span-1 flex flex-col items-center justify-center">
+                    <div class="text-[9px] sm:text-[10px] font-arcade font-bold text-cyan-300 tracking-widest uppercase mb-0.5 text-center" id="hud-round-label">ROUND 1</div>
+                    <div class="w-12 h-11 md:w-16 md:h-14 rounded-xl winter-glass border-2 border-cyan-300/80 flex items-center justify-center shadow-[0_0_20px_rgba(56,189,248,0.4)]">
+                        <span id="hud-timer" class="text-xl md:text-3xl font-arcade font-black text-white">60</span>
+                    </div>
+                    <button onclick="openPauseMenu()" class="interactive mt-1 px-2 py-0.5 rounded bg-slate-950/90 hover:bg-slate-800 text-[10px] font-arcade text-sky-200 border border-sky-400/40">
+                        PAUSE
+                    </button>
+                </div>
+
+                <!-- PLAYER 2 HUD (Right 5 cols) -->
+                <div class="col-span-5 flex flex-col">
+                    <div class="flex items-end justify-between flex-row-reverse mb-1 px-1">
+                        <div class="flex items-center gap-2 flex-row-reverse">
+                            <span id="hud-p2-name" class="text-base md:text-2xl font-arcade font-black tracking-wide text-white drop-shadow">T.KOI</span>
+                            <span id="hud-p2-rage-badge" class="hidden px-2 py-0.5 text-[10px] font-arcade font-black bg-gradient-to-l from-red-600 to-amber-500 text-white rounded animate-pulse shadow-[0_0_12px_#ff003c]">
+                                🔥 RAGE! R1/R2 or U
+                            </span>
+                        </div>
+                        <div class="flex items-center gap-1.5" id="hud-p2-orbs"></div>
+                    </div>
+
+                    <div id="hud-p2-bar-frame" class="h-6 md:h-7 w-full bg-slate-950/90 border-2 border-rose-400/85 rounded-sm p-0.5 skew-bar-right shadow-[0_0_20px_rgba(0,0,0,0.85)] relative overflow-hidden">
+                        <div id="hud-p2-hp-trail" class="h-full bg-amber-400/85 transition-all duration-500 ease-out absolute top-0 left-0" style="width: 100%;"></div>
+                        <div id="hud-p2-hp" class="h-full bg-gradient-to-r from-rose-200 via-rose-500 to-red-700 transition-all duration-100 relative" style="width: 100%;"></div>
+                    </div>
+
+                    <div class="mt-1.5 flex items-center gap-2 flex-row-reverse">
+                        <div class="flex-1 h-2.5 bg-slate-950/90 border border-rose-400/40 skew-bar-right p-0.5 overflow-hidden">
+                            <div id="hud-p2-energy" class="h-full bg-gradient-to-l from-rose-400 via-amber-300 to-white transition-all duration-100 ml-auto" style="width: 50%;"></div>
+                        </div>
+                        <span id="hud-p2-energy-text" class="text-[11px] font-arcade font-bold text-amber-300 w-16 text-left">50% RAGE</span>
+                    </div>
+
+                    <div id="hud-p2-combo" class="mt-3 pr-2 text-right transition-transform duration-150 opacity-0 pointer-events-none">
+                        <div id="hud-p2-combo-hits" class="text-3xl md:text-5xl font-arcade font-black italic text-rose-400 drop-shadow-[0_4px_12px_rgba(244,63,94,0.85)]">3 HITS</div>
+                        <div id="hud-p2-combo-dmg" class="text-xs md:text-sm font-arcade font-bold text-amber-300 tracking-widest uppercase">42 DAMAGE</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Practice Mode Quick Toolbar -->
+            <div id="practice-toolbar" class="hidden mt-2 mx-auto max-w-xl winter-glass rounded-lg px-3 py-1.5 flex flex-wrap items-center justify-center gap-2 text-xs interactive">
+                <span class="font-arcade text-cyan-300 font-bold">PRACTICE DOJO:</span>
+                <button onclick="triggerPracticeRefill()" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-white border border-slate-600">Refill HP & Gauge</button>
+                <button onclick="triggerPracticeRage()" class="px-2 py-0.5 rounded bg-red-900/80 hover:bg-red-800 text-amber-200 border border-red-500/50">Activate P1 RAGE</button>
+                <button onclick="toggleDummyAI()" id="btn-dummy-ai" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-slate-600">Dummy: Stand Still</button>
+            </div>
+        </div>
+
+        <!-- CENTER ANNOUNCER BANNER -->
+        <div id="center-banner" class="my-auto flex flex-col items-center justify-center pointer-events-none transform scale-90 opacity-0 transition-all duration-200">
+            <div id="center-banner-sub" class="text-sm md:text-xl font-arcade font-bold tracking-[0.28em] text-cyan-200 uppercase drop-shadow">HALLO WINTER SCHOOL EDITION</div>
+            <div id="center-banner-main" class="text-5xl sm:text-7xl md:text-8xl font-arcade font-black italic tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-white via-cyan-200 to-amber-400 drop-shadow-[0_10px_25px_rgba(0,0,0,0.95)] text-center">
+                FIGHT!
+            </div>
+        </div>
+
+        <!-- ON-SCREEN DUALSENSE ARCADE TOUCH CONTROLS -->
+        <div id="touch-controls" class="hidden interactive w-full max-w-6xl mx-auto pb-4 flex items-end justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="grid grid-cols-3 gap-1.5 w-36 h-36 winter-glass p-2 rounded-full">
+                    <div></div>
+                    <button onpointerdown="setTouchInput('up', true)" onpointerup="setTouchInput('up', false)" onpointerleave="setTouchInput('up', false)" class="ps5-btn text-lg font-bold text-slate-200">▲</button>
+                    <div></div>
+                    <button onpointerdown="setTouchInput('left', true)" onpointerup="setTouchInput('left', false)" onpointerleave="setTouchInput('left', false)" class="ps5-btn text-lg font-bold text-slate-200">◀</button>
+                    <div class="rounded-full bg-slate-900/90 border border-slate-800"></div>
+                    <button onpointerdown="setTouchInput('right', true)" onpointerup="setTouchInput('right', false)" onpointerleave="setTouchInput('right', false)" class="ps5-btn text-lg font-bold text-slate-200">▶</button>
+                    <div></div>
+                    <button onpointerdown="setTouchInput('down', true)" onpointerup="setTouchInput('down', false)" onpointerleave="setTouchInput('down', false)" class="ps5-btn text-lg font-bold text-slate-200">▼</button>
+                    <div></div>
+                </div>
+                <button onpointerdown="setTouchInput('block', true)" onpointerup="setTouchInput('block', false)" onpointerleave="setTouchInput('block', false)" class="ps5-btn w-14 h-14 text-xs font-arcade font-bold text-cyan-300 border-cyan-400/60">
+                    L1/◯<br>BLOCK
+                </button>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <button onpointerdown="triggerTouchAttack('rage')" class="ps5-btn px-3 py-3 rounded-xl text-xs font-arcade font-black text-amber-300 border-red-400/80 bg-gradient-to-br from-red-950 to-sky-950 shadow-[0_0_16px_rgba(239,68,68,0.6)]">
+                    R1/R2<br>RAGE ART
+                </button>
+
+                <div class="grid grid-cols-3 gap-1.5 w-36 h-36 winter-glass p-2 rounded-full">
+                    <div></div>
+                    <button onpointerdown="triggerTouchAttack('hk')" class="ps5-btn text-emerald-400 font-black text-xl" title="Triangle - Heavy Kick">△</button>
+                    <div></div>
+                    <button onpointerdown="triggerTouchAttack('lp')" class="ps5-btn text-pink-400 font-black text-xl" title="Square - Light Punch">▢</button>
+                    <div class="rounded-full bg-slate-900/90 border border-slate-800 flex items-center justify-center text-[9px] text-cyan-300 font-arcade">PS5</div>
+                    <button onpointerdown="setTouchInput('block', true)" onpointerup="setTouchInput('block', false)" onpointerleave="setTouchInput('block', false)" class="ps5-btn text-rose-400 font-black text-xl" title="Circle - Block">◯</button>
+                    <div></div>
+                    <button onpointerdown="triggerTouchAttack('special')" class="ps5-btn text-sky-400 font-black text-xl" title="Cross - Special / Launcher">✕</button>
+                    <div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Controls Hint Strip -->
+        <div id="bottom-combat-strip" class="max-w-6xl w-full mx-auto flex flex-wrap items-center justify-between gap-2 px-3 py-1 rounded-lg winter-glass text-[10px] sm:text-[11px] text-sky-100">
+            <div>
+                <strong class="text-cyan-300">PS5 Pad:</strong> <span class="text-pink-400">▢</span> LP • <span class="text-emerald-400">△</span> Heavy Kick • <span class="text-sky-400">✕</span> Special/Launcher • <span class="text-rose-400">◯/L1</span> Block • <strong class="text-amber-300">R1/R2</strong> Rage Art
+            </div>
+            <div>
+                <strong class="text-cyan-300">P1:</strong> WASD + <span class="text-amber-300">F/G/H/R</span> • <strong class="text-rose-400">P2:</strong> Arrows + <span class="text-amber-300">J/K/L/U</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- VICTORY / POST-MATCH MODAL                 -->
+    <!-- ========================================== -->
+    <div id="victory-modal" class="ui-layer hidden interactive bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-30">
+        <div class="max-w-md w-full winter-glass border-2 border-cyan-300/80 rounded-2xl p-6 text-center shadow-[0_0_50px_rgba(56,189,248,0.45)]">
+            <div class="text-xs font-arcade text-cyan-300 tracking-widest uppercase">❄️ T.KOI FIGHTER!! HALLO WINTER EDITION ❄️</div>
+            <h2 id="victory-winner-name" class="text-3xl sm:text-4xl font-arcade font-black text-white mt-1">T.KOI WINS!</h2>
+            <p id="victory-winner-quote" class="text-sm text-sky-100 italic mt-2">"True martial mastery freezes even lightning itself."</p>
+
+            <div class="mt-6 flex flex-col gap-2.5">
+                <button onclick="rematch()" class="w-full py-3 rounded-xl font-arcade font-black text-sm bg-gradient-to-r from-cyan-400 via-sky-500 to-amber-400 hover:from-cyan-300 hover:to-amber-300 text-slate-950 shadow-lg transition">
+                    ❄️ REMATCH (PRESS ENTER / ✕)
+                </button>
+                <button onclick="returnToCharSelect()" class="w-full py-2.5 rounded-xl font-arcade font-bold text-xs bg-slate-900 hover:bg-slate-800 text-sky-100 border border-sky-400/40 transition">
+                    👤 CHARACTER & STAGE SELECT
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- PAUSE & CONTROLS GUIDE MODAL               -->
+    <!-- ========================================== -->
+    <div id="controls-modal" class="ui-layer hidden interactive bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 z-50">
+        <div class="max-w-2xl w-full winter-glass rounded-2xl p-5 md:p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-sky-400/30 pb-3">
+                <h3 class="text-lg sm:text-xl font-arcade font-black text-cyan-300">🎮 PS5 DUALSENSE & KEYBOARD CONTROLS</h3>
+                <button onclick="toggleControlsModal()" class="px-3 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs">CLOSE ✕</button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 text-xs">
+                <div class="bg-slate-950/90 p-3.5 rounded-xl border border-cyan-400/40 space-y-2">
+                    <div class="font-arcade font-bold text-cyan-300 text-sm">PS5 DUALSENSE CONTROLLER</div>
+                    <p class="text-slate-400">Connect via USB or Bluetooth and press any button. Supports 2 Controllers or 1 Controller + 1 Keyboard!</p>
+                    <ul class="space-y-1.5 text-slate-200">
+                        <li><strong class="text-sky-300">Left Stick / D-Pad:</strong> Move, Crouch & Jump</li>
+                        <li><strong class="text-pink-400">▢ Square:</strong> Light Punch (Fast combo starter)</li>
+                        <li><strong class="text-emerald-400">△ Triangle:</strong> Heavy Kick (High knockback)</li>
+                        <li><strong class="text-sky-400">✕ Cross:</strong> Special / Sky Launcher</li>
+                        <li><strong class="text-rose-400">◯ Circle / L1:</strong> Energy Guard / Block</li>
+                        <li><strong class="text-amber-300">R1 / R2:</strong> Cinematic <strong>RAGE ART</strong> (When HP &lt; 35% or 100% Rage)</li>
+                    </ul>
+                </div>
+
+                <div class="bg-slate-950/90 p-3.5 rounded-xl border border-rose-400/40 space-y-2">
+                    <div class="font-arcade font-bold text-rose-300 text-sm">2-PLAYER KEYBOARD LAYOUT</div>
+                    <div class="space-y-1 text-slate-200">
+                        <div class="text-cyan-300 font-bold">PLAYER 1 (WASD + F / G / H / R):</div>
+                        <p>• Move / Jump / Crouch: <strong>W, A, S, D</strong></p>
+                        <p>• Light Punch: <strong>F</strong> • Heavy Kick: <strong>G</strong></p>
+                        <p>• Special / Launcher: <strong>H</strong> • Rage Art: <strong>R</strong></p>
+                        <p>• Block: <strong>E / Left Shift</strong> (or hold Back)</p>
+                    </div>
+                    <div class="space-y-1 text-slate-200 pt-2 border-t border-slate-800">
+                        <div class="text-rose-300 font-bold">PLAYER 2 (Arrows + J / K / L / U):</div>
+                        <p>• Move / Jump / Crouch: <strong>Arrow Keys</strong></p>
+                        <p>• Light Punch: <strong>J</strong> • Heavy Kick: <strong>K</strong></p>
+                        <p>• Special / Launcher: <strong>L</strong> • Rage Art: <strong>U</strong></p>
+                        <p>• Block: <strong>I / Right Shift</strong> (or hold Back)</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4 bg-sky-950/60 border border-cyan-400/40 rounded-xl p-3 text-xs text-cyan-100">
+                <strong>❄️ HALLO WINTER COMBO TIPS:</strong><br>
+                • Chain <strong>Light Punch ➔ Light Punch ➔ Special/Launcher</strong> to launch opponents into the air and juggle them!<br>
+                • When your HP drops below <strong>35%</strong>, your <strong>RAGE AURA</strong> ignites—press <strong>R1/R2</strong> (or <strong>R</strong> / <strong>U</strong>) to unleash your fighter's cinematic Rage Art!
+            </div>
+
+            <div class="mt-4 flex justify-end gap-2">
+                <button onclick="returnToCharSelect(); toggleControlsModal();" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-arcade font-bold text-slate-200">
+                    CHARACTER SELECT
+                </button>
+                <button onclick="toggleControlsModal()" class="px-5 py-2 rounded-lg bg-cyan-400 hover:bg-cyan-300 text-slate-950 text-xs font-arcade font-black">
+                    RESUME
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /********************************************************************
+         * 1. FULL 25-FIGHTER ROSTER + 3 WINTER EDITION COSTUME VARIANTS
+         ********************************************************************/
+        const FIGHTERS = [
+            // --- ORIGINAL 20 FIGHTERS ---
+            {
+                id: 'aisei',
+                name: 'AISEI',
+                gender: 'boy',
+                title: '"The Lightning Striker"',
+                style: 'Electric Mishima Karate',
+                specialName: '⚡ Thunder God Fist',
+                desc: 'High-voltage karate prodigy with spiky cyan hair, cyber-gi vest, and explosive blue lightning uppercuts.',
+                quote: '"Feel the surge of a thousand thunderstorms!"',
+                stats: { power: 84, speed: 94, range: 80 },
+                colors: { skin: 0xffd1b3, hair: 0x00e5ff, top: 0x0f172a, trim: 0x00f0ff, pants: 0x1e293b, gloves: 0x0284c7, aura: 0x00e5ff },
+                scale: { x: 1.0, y: 1.0, z: 1.0 }
+            },
+            {
+                id: 'fumio',
+                name: 'FUMIO',
+                gender: 'boy',
+                title: '"The Iron Titan"',
+                style: 'Heavy Earth-Shaker Brawler',
+                specialName: '🌋 Meteor Ground Slam',
+                desc: 'Powerhouse street brawler with crimson headband, magma-armored gauntlets, and ground-shattering shockwaves.',
+                quote: '"Stand firm all you want—I will shatter the ground beneath you!"',
+                stats: { power: 96, speed: 75, range: 84 },
+                colors: { skin: 0xf4bd96, hair: 0x271c19, top: 0x7f1d1d, trim: 0xff5500, pants: 0x262626, gloves: 0xd97706, aura: 0xff4500 },
+                scale: { x: 1.15, y: 1.04, z: 1.14 }
+            },
+            {
+                id: 'fuki',
+                name: 'FUKI',
+                gender: 'girl',
+                title: '"The Jade Kung-Fu Empress"',
+                style: 'Heavenly Dragon Kung-Fu',
+                specialName: '🐉 Heavenly Dragon Kick',
+                desc: 'Stylish Kung-Fu prodigy in a royal jade & gold silk Qipao with twin ox-horn hair buns, golden wrist bangles, and lightning lotus kicks.',
+                quote: '"Grace like flowing silk, strikes like a heavenly dragon!"',
+                stats: { power: 83, speed: 100, range: 88 },
+                colors: { skin: 0xffe5d4, hair: 0x160f1a, top: 0x059669, trim: 0xfbbf24, pants: 0x1e1b2e, gloves: 0xf59e0b, aura: 0x34d399 },
+                scale: { x: 0.94, y: 0.98, z: 0.94 }
+            },
+            {
+                id: 'hanami',
+                name: 'HANAMI',
+                gender: 'girl',
+                title: '"The Crimson Blossom"',
+                style: 'Sakura Chi Palm Arts',
+                specialName: '🌸 Sakura Supernova',
+                desc: 'Graceful martial artist in a pink-gold battle kimono who channels explosive cherry blossom shockwaves.',
+                quote: '"Even the softest petal strikes like steel in full bloom."',
+                stats: { power: 85, speed: 91, range: 88 },
+                colors: { skin: 0xffe4d0, hair: 0xf472b6, top: 0x831843, trim: 0xfbbf24, pants: 0x31102f, gloves: 0xec4899, aura: 0xff2e93 },
+                scale: { x: 0.94, y: 0.98, z: 0.94 },
+                winterVariant: {
+                    title: '"Winter Camellia Blossom"',
+                    style: 'Snow-Sakura Kimono Arts',
+                    specialName: '❄️ Frozen Sakura Tempest',
+                    desc: 'Clad in a snow-white and crimson winter kimono with a plush fur stole and frost-crystal hairpins, summoning swirling snow-sakura petals.',
+                    quote: '"Camellias bloom brightest in the deepest winter snow."',
+                    colors: { skin: 0xffece0, hair: 0xf9a8d4, top: 0xf8fafc, trim: 0xe11d48, pants: 0x881337, gloves: 0xbe123c, aura: 0xfb7185, fur: 0xffffff }
+                }
+            },
+            {
+                id: 'tkoi',
+                name: 'T.KOI',
+                gender: 'man',
+                title: '"The Grandmaster Boss"',
+                style: 'Supreme Dragon Overlord',
+                specialName: '🐉 Supreme Dragon Overdrive',
+                desc: 'Heavily muscular martial arts grandmaster clad in black & gold dragon regalia with golden lightning dominance.',
+                quote: '"Bow before true martial perfection. The Iron Fist belongs to T.Koi!"',
+                stats: { power: 100, speed: 89, range: 95 },
+                colors: { skin: 0xe6a97c, hair: 0x111115, top: 0x09090b, trim: 0xffd700, pants: 0x18181b, gloves: 0xf59e0b, aura: 0xffd700 },
+                scale: { x: 1.25, y: 1.12, z: 1.22 },
+                winterVariant: {
+                    title: '"Frost Dragon Grandmaster"',
+                    style: 'Glacier Dragon Overlord',
+                    specialName: '❄️ Glacier Dragon Overdrive',
+                    desc: 'Muscular grandmaster wearing an opulent royal white-and-ice-blue fur-trimmed winter dragon overcoat with golden clasps and icy glowing eyes.',
+                    quote: '"Absolute zero bows to the Frost Dragon! Welcome to HALLO Winter!"',
+                    colors: { skin: 0xe8b288, hair: 0xe0f2fe, top: 0xf1f5f9, trim: 0x38bdf8, pants: 0x0c4a6e, gloves: 0xfbbf24, aura: 0x38bdf8, fur: 0xffffff }
+                }
+            },
+            {
+                id: 'yayoi',
+                name: 'YAYOI',
+                gender: 'boy',
+                title: '"The Shadow Blitzer"',
+                style: 'Violet Flame Phantom Kung-Fu',
+                specialName: '🔮 Void Eclipse Barrage',
+                desc: 'Silver-violet haired rushdown specialist who teleports through shadow rifts and strikes with purple flames.',
+                quote: '"From the eclipse I strike—you already missed your chance."',
+                stats: { power: 84, speed: 96, range: 83 },
+                colors: { skin: 0xfde2cc, hair: 0xc084fc, top: 0x2e1065, trim: 0xa855f7, pants: 0x090d16, gloves: 0x9333ea, aura: 0xa855f7 },
+                scale: { x: 0.98, y: 1.0, z: 0.98 }
+            },
+            {
+                id: 'yuika',
+                name: 'YUIKA',
+                gender: 'girl',
+                title: '"The Starlight Valkyrie"',
+                style: 'Celestial Astra Martial Arts',
+                specialName: '✨ Cosmic Starlight Lance',
+                desc: 'Elegant valkyrie fighter with a flowing lavender-silver ponytail, starlight tiara, and celestial amethyst battle dress.',
+                quote: '"May the judgment of a billion stars illuminate this arena!"',
+                stats: { power: 86, speed: 94, range: 92 },
+                colors: { skin: 0xfff0e6, hair: 0xe9d5ff, top: 0xf8fafc, trim: 0xc084fc, pants: 0x3b0764, gloves: 0xa855f7, aura: 0xe879f9 },
+                scale: { x: 0.94, y: 1.0, z: 0.94 },
+                winterVariant: {
+                    title: '"Snowlight Valkyrie"',
+                    style: 'Celestial Blizzard Arts',
+                    specialName: '❄️ Blizzard Starfall',
+                    desc: 'Radiant winter valkyrie in an icy silver-blue dress with a fluffy white fur capelet, crystal snowflake tiara, and frost-forged winter boots.',
+                    quote: '"Beneath the winter constellations, witness the Blizzard Starfall!"',
+                    colors: { skin: 0xfff2eb, hair: 0xe0f2fe, top: 0x7dd3fc, trim: 0xffffff, pants: 0x0c4a6e, gloves: 0x38bdf8, aura: 0x7dd3fc, fur: 0xffffff }
+                }
+            },
+            {
+                id: 'anne',
+                name: 'ANNE',
+                gender: 'girl',
+                title: '"The Scarlet Rose Duelist"',
+                style: 'Royal Savate & Rose Arts',
+                specialName: '🌹 Crimson Rose Spiral',
+                desc: 'Aristocratic blonde twin-drill duelist in a crimson & white corset jacket who overwhelms foes with rapier-like kicks.',
+                quote: '"Every rose has its thorns, darling—prepare to be pierced!"',
+                stats: { power: 83, speed: 95, range: 90 },
+                colors: { skin: 0xffeadb, hair: 0xfacc15, top: 0x9f1239, trim: 0xfef08a, pants: 0x1f2937, gloves: 0xe11d48, aura: 0xf43f5e },
+                scale: { x: 0.94, y: 0.99, z: 0.94 }
+            },
+            {
+                id: 'honoka',
+                name: 'HONOKA',
+                gender: 'girl',
+                title: '"The Solar Phoenix Dancer"',
+                style: 'Blazing Capoeira & Kickboxing',
+                specialName: '🔥 Solar Phoenix Flare',
+                desc: 'Energetic fighter with sunset-orange braided pigtails, flame-trimmed crop jacket, pleated battle skirt, and fiery kicks.',
+                quote: '"My flames dance higher with every beat of the music!"',
+                stats: { power: 88, speed: 96, range: 85 },
+                colors: { skin: 0xffdfc4, hair: 0xf97316, top: 0x9a3412, trim: 0xfde047, pants: 0x18181b, gloves: 0xea580c, aura: 0xff7b00 },
+                scale: { x: 0.94, y: 0.97, z: 0.94 }
+            },
+            {
+                id: 'sara',
+                name: 'SARA',
+                gender: 'girl',
+                title: '"The Frost Blade Kunoichi"',
+                style: 'Sub-Zero Shinobi Ninjutsu',
+                specialName: '❄️ Absolute Zero Blizzard',
+                desc: 'Cyber-ninja assassin with a sleek icy-blue bob cut, crystal hairpin, and diamond-frost scarf.',
+                quote: '"Freeze in silence. Your movements are already crystalized."',
+                stats: { power: 81, speed: 99, range: 87 },
+                colors: { skin: 0xfff1e6, hair: 0x7dd3fc, top: 0x0c4a6e, trim: 0x38bdf8, pants: 0x082f49, gloves: 0x0284c7, aura: 0x38bdf8 },
+                scale: { x: 0.93, y: 0.98, z: 0.93 }
+            },
+            {
+                id: 'sowa',
+                name: 'SOWA',
+                gender: 'boy',
+                title: '"The Gale Force Prodigy"',
+                style: 'Tempest Taekkyon & Aero Fist',
+                specialName: '🌪️ Supersonic Hurricane Upper',
+                desc: 'High-flying wind striker with emerald-teal spiky hair, sleeveless aero hoodie vest, and tornado-spun kicks.',
+                quote: '"You cannot catch the wind—and you cannot block a hurricane!"',
+                stats: { power: 82, speed: 98, range: 87 },
+                colors: { skin: 0xffd8b8, hair: 0x2dd4bf, top: 0x064e3b, trim: 0x5eead4, pants: 0x0f172a, gloves: 0x14b8a6, aura: 0x2dd4bf },
+                scale: { x: 0.98, y: 1.0, z: 0.98 }
+            },
+            {
+                id: 'sakito',
+                name: 'SAKITO',
+                gender: 'boy',
+                title: '"The Crimson Samurai"',
+                style: 'Iai Spirit Blade Kenjutsu',
+                specialName: '⚔️ Crimson Iai Slash Wave',
+                desc: 'Calm and lethal warrior with a jet-black samurai topknot and armored scarlet-gold haori who projects vacuum blade slashes.',
+                quote: '"One draw, one heartbeat. The outcome is already decided."',
+                stats: { power: 92, speed: 90, range: 94 },
+                colors: { skin: 0xfbe0c8, hair: 0x18181b, top: 0x991b1b, trim: 0xfbbf24, pants: 0x09090b, gloves: 0xdc2626, aura: 0xff1e42 },
+                scale: { x: 1.02, y: 1.02, z: 1.02 }
+            },
+            {
+                id: 'yuto',
+                name: 'YUTO',
+                gender: 'boy',
+                title: '"The Cobalt Cyber Boxer"',
+                style: 'Kinetic Overdrive Boxing',
+                specialName: '🥊 Plasma Dempsey Roll',
+                desc: 'Futuristic champion boxer sporting a neon-blue visor, electric undercut, and heavy piston-driven gauntlets.',
+                quote: '"Target locked. Engaging maximum kinetic weave and knockout!"',
+                stats: { power: 91, speed: 93, range: 80 },
+                colors: { skin: 0xf5cba7, hair: 0x2563eb, top: 0x1e3a8a, trim: 0x60a5fa, pants: 0x0f172a, gloves: 0x3b82f6, aura: 0x3b82f6 },
+                scale: { x: 1.05, y: 1.01, z: 1.05 }
+            },
+            {
+                id: 'ao',
+                name: 'AO',
+                gender: 'boy',
+                title: '"The Azure Water Dragon"',
+                style: 'Flowing Stream Bajiquan',
+                specialName: '🌊 Tidal Dragon Whirlpool',
+                desc: 'Cool-headed martial artist with deep ocean-blue hair and an indigo dragon-scale sleeveless gi.',
+                quote: '"Still water runs deep—until it becomes a crushing tsunami."',
+                stats: { power: 87, speed: 91, range: 89 },
+                colors: { skin: 0xfde2cc, hair: 0x0284c7, top: 0x1e1b4b, trim: 0x06b6d4, pants: 0x0f172a, gloves: 0x0891b2, aura: 0x00d8ff },
+                scale: { x: 1.0, y: 1.01, z: 1.0 }
+            },
+            {
+                id: 'haruaki',
+                name: 'HARUAKI',
+                gender: 'boy',
+                title: '"The Golden Sun Monk"',
+                style: 'Radiant Shaolin Solar Arts',
+                specialName: '☀️ Solar Buddha Palm',
+                desc: 'Enlightened young warrior with spiky golden hair, maroon-and-gold robes, and floating prayer bead orbs.',
+                quote: '"Shine forth! Let solar chi purify this battlefield!"',
+                stats: { power: 90, speed: 88, range: 91 },
+                colors: { skin: 0xf8cfa9, hair: 0xfbbf24, top: 0x7c2d12, trim: 0xfde047, pants: 0x451a03, gloves: 0xf59e0b, aura: 0xffd000 },
+                scale: { x: 1.03, y: 1.01, z: 1.03 }
+            },
+            {
+                id: 'joe',
+                name: 'JOE',
+                gender: 'boy',
+                title: '"The Street Brawler King"',
+                style: 'Outlaw Kickboxing & Wrestling',
+                specialName: '💥 Nitro Knuckle Buster',
+                desc: 'Fearless street legend with a blonde pompadour, dark shades, red leather biker vest, and explosive haymakers.',
+                quote: '"No rules, no excuses—just pure street knockout power, baby!"',
+                stats: { power: 94, speed: 85, range: 85 },
+                colors: { skin: 0xf4bd96, hair: 0xfacc15, top: 0xb91c1c, trim: 0xfbbf24, pants: 0x1e293b, gloves: 0xdc2626, aura: 0xff5e00 },
+                scale: { x: 1.08, y: 1.03, z: 1.08 }
+            },
+            {
+                id: 'kyoma',
+                name: 'KYOMA',
+                gender: 'boy',
+                title: '"The Pixel Blaster Hero"',
+                style: 'Arcade Gun-Kata & Rushdown',
+                specialName: '☄️ Shooting Kyoma Overdrive',
+                desc: 'Fiery red-and-black spiky-haired arcade hero with a retro cyber visor and dual wrist-blasters.',
+                quote: '"Insert coin! Ready Player One—Shooting Kyoma Overdrive!"',
+                stats: { power: 88, speed: 92, range: 94 },
+                colors: { skin: 0xffd5b8, hair: 0xef4444, top: 0x18181b, trim: 0x22c55e, pants: 0x27272a, gloves: 0xef4444, aura: 0x10b981 },
+                scale: { x: 1.0, y: 1.0, z: 1.0 }
+            },
+            {
+                id: 'sora',
+                name: 'SORA',
+                gender: 'boy',
+                title: '"The Sky Horizon Striker"',
+                style: 'Cloud-Strider Aerial Kung-Fu',
+                specialName: '🦅 Stratosphere Dive Kick',
+                desc: 'Feather-haired sky warrior in a white-and-azure winged jacket who dominates aerial juggle combat.',
+                quote: '"Look to the horizon! Above the clouds, nobody can touch me!"',
+                stats: { power: 83, speed: 99, range: 88 },
+                colors: { skin: 0xffe4cc, hair: 0x93c5fd, top: 0xf8fafc, trim: 0x38bdf8, pants: 0x1e3a8a, gloves: 0x0ea5e9, aura: 0x60a5fa },
+                scale: { x: 0.98, y: 1.0, z: 0.98 }
+            },
+            {
+                id: 'rintaro',
+                name: 'RINTARO',
+                gender: 'boy',
+                title: '"The Earthshaker Berserker"',
+                style: 'Colossus Grappler & Impact Arts',
+                specialName: '🪨 Tectonic Quake Crusher',
+                desc: 'Fierce juggernaut with wild bronze hair and heavy emerald-gold shoulder armor who crushes guards with raw force.',
+                quote: '"Bring all your strength! I will crush it with a single roar!"',
+                stats: { power: 98, speed: 78, range: 88 },
+                colors: { skin: 0xebaf85, hair: 0x92400e, top: 0x14532d, trim: 0xfacc15, pants: 0x1c1917, gloves: 0xca8a04, aura: 0x84cc16 },
+                scale: { x: 1.18, y: 1.06, z: 1.16 }
+            },
+            {
+                id: 'himari',
+                name: 'HIMARI',
+                gender: 'girl',
+                title: '"The Ribbon Kitty Striker"',
+                style: 'Acrobatic Neko Fist',
+                specialName: '🎀 Mega Kitty Ribbon Smash',
+                desc: 'Ultra-stylish fighter with pastel-pink twin buns, iconic red ribbon cat-ear headband, and deceptive knockout power.',
+                quote: '"Cute? Thank you! Now catch this hundred-ton ribbon punch!"',
+                stats: { power: 90, speed: 97, range: 82 },
+                colors: { skin: 0xffece0, hair: 0xf9a8d4, top: 0xffffff, trim: 0xef4444, pants: 0x881337, gloves: 0xef4444, aura: 0xfb7185 },
+                scale: { x: 0.92, y: 0.95, z: 0.92 }
+            },
+
+            // --- 5 BRAND-NEW HALLO WINTER EXCLUSIVE FIGHTERS ---
+            {
+                id: 'tryoma',
+                name: 'T.RYOMA',
+                gender: 'boy',
+                isWinterExclusive: true,
+                title: '"Frost Blade Prodigy"',
+                style: 'Sub-Zero Dragon Karate',
+                specialName: '❄️ Sub-Zero Dragon Fang',
+                desc: 'Cool winter prodigy in an icy-blue & navy fur-trimmed parka, crimson-and-white scarf, frosted spiky hair, and glowing ice gauntlets.',
+                quote: '"Feel the chill of the Frost Blade! This winter arena is mine!"',
+                stats: { power: 91, speed: 96, range: 90 },
+                colors: { skin: 0xffdfc8, hair: 0xbae6fd, top: 0x0c4a6e, trim: 0x38bdf8, pants: 0x0f172a, gloves: 0x00e5ff, aura: 0x38bdf8, fur: 0xffffff, scarf: 0xe11d48 },
+                scale: { x: 1.02, y: 1.02, z: 1.02 }
+            },
+            {
+                id: 'mana',
+                name: 'MANA',
+                gender: 'girl',
+                isWinterExclusive: true,
+                title: '"Crystal Snow Princess"',
+                style: 'Glacier Waltz & Ice Chi',
+                specialName: '💎 Diamond Snowfall Waltz',
+                desc: 'Stylish winter heroine with rosy cheeks, long flowing silver-blue hair, fluffy white knit beret with ice-gem bow, and sky-blue fur-trimmed winter dress coat.',
+                quote: '"Dance gracefully through the blizzard—Diamond Snowfall Waltz!"',
+                stats: { power: 85, speed: 95, range: 92 },
+                colors: { skin: 0xfff0e6, hair: 0xbfdbfe, top: 0x38bdf8, trim: 0xffffff, pants: 0xe0f2fe, gloves: 0x7dd3fc, aura: 0x7dd3fc, fur: 0xffffff },
+                scale: { x: 0.93, y: 0.98, z: 0.93 }
+            },
+            {
+                id: 'rikoy',
+                name: 'RIKO.Y',
+                gender: 'girl',
+                isWinterExclusive: true,
+                title: '"Aurora Kung-Fu Star"',
+                style: 'Northern Lights Kung-Fu',
+                specialName: '🌌 Northern Lights Lotus Kick',
+                desc: 'Graceful winter martial artist with twin braids, snow-crystal hair ribbons, earmuffs, lavender-silver fur-trimmed Qipao tunic, and glowing aurora ankle cuffs.',
+                quote: '"Fast as the aurora across the winter sky—catch my Lotus Kick!"',
+                stats: { power: 84, speed: 99, range: 89 },
+                colors: { skin: 0xffece0, hair: 0x312e81, top: 0xa78bfa, trim: 0xe0f2fe, pants: 0x1e1b4b, gloves: 0x2dd4bf, aura: 0x34d399, fur: 0xf8fafc },
+                scale: { x: 0.94, y: 0.98, z: 0.94 }
+            },
+            {
+                id: 'haruto',
+                name: 'HARUTO',
+                gender: 'boy',
+                isWinterExclusive: true,
+                title: '"Blizzard Striker"',
+                style: 'Avalanche Boxing & Street Rush',
+                specialName: '🌨️ Avalanche Rush Combo',
+                desc: 'Energetic striker in a cobalt-and-white quilted winter puffer vest over a black hoodie, red winter scarf, forehead snow goggles, and frost boxing wraps.',
+                quote: '"No snowstorm can slow me down—here comes the Avalanche Rush!"',
+                stats: { power: 89, speed: 95, range: 84 },
+                colors: { skin: 0xfbd5b8, hair: 0x1e293b, top: 0x2563eb, trim: 0xf8fafc, pants: 0x0f172a, gloves: 0x38bdf8, aura: 0x60a5fa, scarf: 0xef4444 },
+                scale: { x: 1.02, y: 1.0, z: 1.02 }
+            },
+            {
+                id: 'rentaro',
+                name: 'RENTARO',
+                gender: 'boy',
+                isWinterExclusive: true,
+                title: '"Glacier Wolf Brawler"',
+                style: 'Permafrost Heavy Impact Arts',
+                specialName: '🐺 Permafrost Earthshaker',
+                desc: 'Sturdy powerhouse in a heavy charcoal-and-ice-cyan wolf-fur winter fighter jacket, icy crystal shoulder guards, and frosted heavy gauntlets.',
+                quote: '"Hear the glacier wolf howl! Nothing survives the Permafrost Earthshaker!"',
+                stats: { power: 98, speed: 80, range: 89 },
+                colors: { skin: 0xedb892, hair: 0x64748b, top: 0x1e293b, trim: 0x22d3ee, pants: 0x0f172a, gloves: 0x06b6d4, aura: 0x22d3ee, fur: 0xcbd5e1 },
+                scale: { x: 1.18, y: 1.07, z: 1.16 }
+            }
+        ];
+
+        function getEffectiveCharData(charIdx, useWinterSkin) {
+            const base = FIGHTERS[charIdx] || FIGHTERS[0];
+            if (useWinterSkin && base.winterVariant) {
+                return {
+                    ...base,
+                    title: base.winterVariant.title,
+                    style: base.winterVariant.style,
+                    specialName: base.winterVariant.specialName,
+                    desc: base.winterVariant.desc,
+                    quote: base.winterVariant.quote,
+                    colors: { ...base.colors, ...base.winterVariant.colors },
+                    isWinterSkinActive: true
+                };
+            }
+            return {
+                ...base,
+                isWinterSkinActive: !!base.isWinterExclusive
+            };
+        }
+
+        const STAGES = [
+            {
+                id: 'hallo_courtyard',
+                name: 'HALLO Snowy Courtyard',
+                floorColor: 0x1e2d42,
+                gridColor: 0x7dd3fc,
+                fogColor: 0x071426,
+                rim1: 0x38bdf8,
+                rim2: 0xfbbf24,
+                snow: true
+            },
+            {
+                id: 'aurora_peak',
+                name: 'Aurora Ice Peak',
+                floorColor: 0x0c243b,
+                gridColor: 0x34d399,
+                fogColor: 0x04121e,
+                rim1: 0x2dd4bf,
+                rim2: 0x818cf8,
+                snow: true
+            },
+            {
+                id: 'frost_dojo',
+                name: 'Frost Dojo Rooftop',
+                floorColor: 0x2a1f1c,
+                gridColor: 0xbae6fd,
+                fogColor: 0x091021,
+                rim1: 0x93c5fd,
+                rim2: 0xfef08a,
+                snow: true
+            },
+            {
+                id: 'classic_neon',
+                name: 'Classic Neon Dojo',
+                floorColor: 0x0b132b,
+                gridColor: 0x00e5ff,
+                fogColor: 0x050814,
+                rim1: 0x00e5ff,
+                rim2: 0xff0055,
+                snow: false
+            }
+        ];
+
+        /********************************************************************
+         * 2. MULTI-TRACK PROCEDURAL WEB AUDIO BGM & SFX ENGINE
+         ********************************************************************/
+        const BGM_TRACKS = [
+            {
+                name: 'HALLO Winter Overdrive',
+                bpm: 144,
+                bass: [65.41, 65.41, 73.42, 82.41, 87.31, 87.31, 98.00, 73.42],
+                lead: [523.25, 659.25, 783.99, 1046.50, 987.77, 783.99, 659.25, 783.99, 587.33, 739.99, 880.00, 1174.66, 987.77, 880.00, 783.99, 659.25],
+                wave: 'triangle',
+                iceBell: true
+            },
+            {
+                name: 'Frost Select Groove',
+                bpm: 120,
+                bass: [55.00, 55.00, 65.41, 55.00, 73.42, 65.41, 49.00, 55.00],
+                lead: [440.00, 0, 523.25, 659.25, 783.99, 0, 659.25, 523.25, 587.33, 0, 659.25, 523.25, 440.00, 392.00, 440.00, 0],
+                wave: 'sine',
+                iceBell: true
+            },
+            {
+                name: 'Dojo Overdrive',
+                bpm: 150,
+                bass: [65.41, 65.41, 77.78, 87.31, 65.41, 65.41, 98.00, 87.31],
+                lead: [523.25, 392.00, 466.16, 523.25, 622.25, 523.25, 466.16, 392.00, 587.33, 466.16, 523.25, 698.46, 622.25, 523.25, 466.16, 392.00],
+                wave: 'sawtooth',
+                iceBell: false
+            },
+            {
+                name: 'Final Boss Temple',
+                bpm: 162,
+                bass: [58.27, 58.27, 61.74, 58.27, 69.30, 65.41, 61.74, 58.27],
+                lead: [466.16, 0, 493.88, 466.16, 554.37, 523.25, 493.88, 466.16, 698.46, 659.25, 554.37, 493.88, 466.16, 0, 349.23, 466.16],
+                wave: 'square',
+                iceBell: false
+            }
+        ];
+
+        class SoundEngine {
+            constructor() {
+                this.ctx = null;
+                this.muted = false;
+                this.bgmEnabled = true;
+                this.bgmPlaying = false;
+                this.bgmTrackIdx = 0; // Default: HALLO Winter Overdrive
+                this.bgmStep = 0;
+                this.bgmTimer = null;
+                this.rageTempoBoost = false;
+            }
+            init() {
+                try {
+                    if (!this.ctx) {
+                        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                        if (AudioCtx) this.ctx = new AudioCtx();
+                    }
+                    if (this.ctx && this.ctx.state === 'suspended') {
+                        this.ctx.resume().catch(() => {});
+                    }
+                    if (this.bgmEnabled && !this.bgmPlaying) {
+                        this.startBGM();
+                    }
+                } catch (e) {}
+            }
+            startBGM() {
+                try {
+                    if (!this.ctx || !this.bgmEnabled) return;
+                    this.stopBGM();
+                    this.bgmPlaying = true;
+                    this.scheduleNextBGMStep();
+                    this.updateBGMUI();
+                } catch (e) {}
+            }
+            stopBGM() {
+                try {
+                    this.bgmPlaying = false;
+                    if (this.bgmTimer) {
+                        clearTimeout(this.bgmTimer);
+                        this.bgmTimer = null;
+                    }
+                    this.updateBGMUI();
+                } catch (e) {}
+            }
+            setBGMTrack(idx) {
+                this.bgmTrackIdx = ((idx % BGM_TRACKS.length) + BGM_TRACKS.length) % BGM_TRACKS.length;
+                this.bgmStep = 0;
+                this.updateBGMUI();
+            }
+            updateBGMUI() {
+                const btnToggle = document.getElementById('btn-bgm-toggle');
+                const btnTrack = document.getElementById('btn-bgm-track');
+                const eqBars = document.querySelectorAll('#bgm-eq .eq-bar');
+                if (btnToggle) {
+                    btnToggle.textContent = this.bgmEnabled ? 'BGM: ON' : 'BGM: MUTE';
+                    btnToggle.className = this.bgmEnabled
+                        ? 'text-[11px] font-arcade font-bold text-cyan-300 hover:text-white transition'
+                        : 'text-[11px] font-arcade font-bold text-rose-400 hover:text-white transition';
+                }
+                if (btnTrack) {
+                    const icon = BGM_TRACKS[this.bgmTrackIdx].iceBell ? '❄️' : '🎵';
+                    btnTrack.textContent = `${icon} ${BGM_TRACKS[this.bgmTrackIdx].name} ⏭`;
+                }
+                eqBars.forEach(b => b.classList.toggle('paused', !this.bgmEnabled || !this.bgmPlaying));
+            }
+            scheduleNextBGMStep() {
+                if (!this.bgmPlaying || !this.bgmEnabled || !this.ctx) return;
+                const track = BGM_TRACKS[this.bgmTrackIdx];
+                const effectiveBpm = this.rageTempoBoost ? track.bpm * 1.16 : track.bpm;
+                const stepDur = (60 / effectiveBpm) * 0.25;
+                this.playBGMStep(track, this.bgmStep, stepDur);
+                this.bgmStep = (this.bgmStep + 1) % 16;
+                this.bgmTimer = setTimeout(() => this.scheduleNextBGMStep(), stepDur * 1000);
+            }
+            playBGMStep(track, step, dur) {
+                if (this.muted || !this.ctx || this.ctx.state !== 'running') return;
+                try {
+                    const now = this.ctx.currentTime;
+
+                    // 1. Kick Drum
+                    if (step % 4 === 0 || step === 14) {
+                        const kOsc = this.ctx.createOscillator();
+                        const kGain = this.ctx.createGain();
+                        kOsc.type = 'sine';
+                        kOsc.frequency.setValueAtTime(125, now);
+                        kOsc.frequency.exponentialRampToValueAtTime(32, now + 0.11);
+                        kGain.gain.setValueAtTime(0.15, now);
+                        kGain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+                        kOsc.connect(kGain);
+                        kGain.connect(this.ctx.destination);
+                        kOsc.start(now);
+                        kOsc.stop(now + 0.12);
+                    }
+
+                    // 2. Crisp Hi-Hat / Sleigh Shimmer / Snare
+                    if (step % 2 === 1 || step === 4 || step === 12) {
+                        const isSnare = (step === 4 || step === 12);
+                        const hOsc = this.ctx.createOscillator();
+                        const hGain = this.ctx.createGain();
+                        hOsc.type = isSnare ? 'triangle' : 'square';
+                        hOsc.frequency.setValueAtTime(isSnare ? 240 : (track.iceBell ? 5600 : 4200), now);
+                        hOsc.frequency.exponentialRampToValueAtTime(isSnare ? 85 : 2200, now + (isSnare ? 0.08 : 0.03));
+                        hGain.gain.setValueAtTime(isSnare ? 0.075 : 0.018, now);
+                        hGain.gain.exponentialRampToValueAtTime(0.001, now + (isSnare ? 0.08 : 0.03));
+                        hOsc.connect(hGain);
+                        hGain.connect(this.ctx.destination);
+                        hOsc.start(now);
+                        hOsc.stop(now + 0.09);
+                    }
+
+                    // 3. Driving Synth Bassline
+                    const bassFreq = track.bass[Math.floor(step / 2) % track.bass.length];
+                    if (bassFreq > 0 && step % 2 === 0) {
+                        const bOsc = this.ctx.createOscillator();
+                        const bFilter = this.ctx.createBiquadFilter();
+                        const bGain = this.ctx.createGain();
+                        bOsc.type = 'sawtooth';
+                        bOsc.frequency.setValueAtTime(bassFreq, now);
+                        bFilter.type = 'lowpass';
+                        bFilter.frequency.setValueAtTime(420, now);
+                        bGain.gain.setValueAtTime(0.085, now);
+                        bGain.gain.exponentialRampToValueAtTime(0.005, now + dur * 1.8);
+                        bOsc.connect(bFilter);
+                        bFilter.connect(bGain);
+                        bGain.connect(this.ctx.destination);
+                        bOsc.start(now);
+                        bOsc.stop(now + dur * 1.9);
+                    }
+
+                    // 4. Lead Synth + Sparkling Ice-Bell Harmonic Overtones
+                    const leadFreq = track.lead[step % track.lead.length];
+                    if (leadFreq > 0) {
+                        const lOsc = this.ctx.createOscillator();
+                        const lGain = this.ctx.createGain();
+                        lOsc.type = track.wave;
+                        lOsc.frequency.setValueAtTime(leadFreq, now);
+                        lGain.gain.setValueAtTime(0.042, now);
+                        lGain.gain.exponentialRampToValueAtTime(0.002, now + dur * 0.92);
+                        lOsc.connect(lGain);
+                        lGain.connect(this.ctx.destination);
+                        lOsc.start(now);
+                        lOsc.stop(now + dur);
+
+                        if (track.iceBell && step % 2 === 0) {
+                            const bellOsc = this.ctx.createOscillator();
+                            const bellGain = this.ctx.createGain();
+                            bellOsc.type = 'sine';
+                            bellOsc.frequency.setValueAtTime(leadFreq * 2, now);
+                            bellGain.gain.setValueAtTime(0.024, now);
+                            bellGain.gain.exponentialRampToValueAtTime(0.001, now + dur * 1.4);
+                            bellOsc.connect(bellGain);
+                            bellGain.connect(this.ctx.destination);
+                            bellOsc.start(now);
+                            bellOsc.stop(now + dur * 1.45);
+                        }
+                    }
+                } catch (e) {}
+            }
+            announce(text, pitch = 0.88, rate = 1.04) {
+                try {
+                    if (this.muted || !('speechSynthesis' in window)) return;
+                    window.speechSynthesis.cancel();
+                    const utter = new SpeechSynthesisUtterance(text);
+                    utter.pitch = pitch;
+                    utter.rate = rate;
+                    utter.volume = 0.9;
+                    window.speechSynthesis.speak(utter);
+                } catch (e) {}
+            }
+            playHit(type = 'light') {
+                this.init();
+                try {
+                    if (!this.ctx || this.muted) return;
+                    const now = this.ctx.currentTime;
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = type === 'heavy' || type === 'special' ? 'sawtooth' : 'triangle';
+                    const startFreq = type === 'special' ? 260 : (type === 'heavy' ? 165 : 125);
+                    osc.frequency.setValueAtTime(startFreq, now);
+                    osc.frequency.exponentialRampToValueAtTime(28, now + (type === 'heavy' ? 0.22 : 0.12));
+                    gain.gain.setValueAtTime(type === 'heavy' ? 0.5 : 0.32, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + (type === 'heavy' ? 0.24 : 0.13));
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.25);
+
+                    const bufferSize = Math.floor(this.ctx.sampleRate * (type === 'heavy' ? 0.15 : 0.08));
+                    const noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                    const output = noiseBuffer.getChannelData(0);
+                    for (let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1;
+                    const whiteNoise = this.ctx.createBufferSource();
+                    whiteNoise.buffer = noiseBuffer;
+                    const filter = this.ctx.createBiquadFilter();
+                    filter.type = 'bandpass';
+                    filter.frequency.value = type === 'special' ? 1500 : 950;
+                    const nGain = this.ctx.createGain();
+                    nGain.gain.setValueAtTime(type === 'heavy' ? 0.42 : 0.22, now);
+                    nGain.gain.exponentialRampToValueAtTime(0.01, now + (type === 'heavy' ? 0.15 : 0.08));
+                    whiteNoise.connect(filter);
+                    filter.connect(nGain);
+                    nGain.connect(this.ctx.destination);
+                    whiteNoise.start(now);
+                } catch (e) {}
+            }
+            playBlock() {
+                this.init();
+                try {
+                    if (!this.ctx || this.muted) return;
+                    const now = this.ctx.currentTime;
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(540, now);
+                    osc.frequency.exponentialRampToValueAtTime(190, now + 0.09);
+                    gain.gain.setValueAtTime(0.24, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.09);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.1);
+                } catch (e) {}
+            }
+            playWhoosh() {
+                this.init();
+                try {
+                    if (!this.ctx || this.muted) return;
+                    const now = this.ctx.currentTime;
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(300, now);
+                    osc.frequency.exponentialRampToValueAtTime(75, now + 0.11);
+                    gain.gain.setValueAtTime(0.14, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.11);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.12);
+                } catch (e) {}
+            }
+            playRageActivation() {
+                this.init();
+                try {
+                    if (!this.ctx || this.muted) return;
+                    const now = this.ctx.currentTime;
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(95, now);
+                    osc.frequency.exponentialRampToValueAtTime(660, now + 0.45);
+                    gain.gain.setValueAtTime(0.42, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.48);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.5);
+                } catch (e) {}
+            }
+            playUIClick() {
+                this.init();
+                try {
+                    if (!this.ctx || this.muted) return;
+                    const now = this.ctx.currentTime;
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(740, now);
+                    osc.frequency.exponentialRampToValueAtTime(1040, now + 0.05);
+                    gain.gain.setValueAtTime(0.14, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.06);
+                } catch (e) {}
+            }
+        }
+        const sfx = new SoundEngine();
+
+        window.addEventListener('pointerdown', () => sfx.init(), { once: true });
+        window.addEventListener('keydown', () => sfx.init(), { once: true });
+
+        function toggleBGM() {
+            sfx.init();
+            sfx.bgmEnabled = !sfx.bgmEnabled;
+            if (sfx.bgmEnabled) sfx.startBGM();
+            else sfx.stopBGM();
+        }
+        function cycleBGMTrack() {
+            sfx.init();
+            sfx.setBGMTrack(sfx.bgmTrackIdx + 1);
+            if (!sfx.bgmEnabled) {
+                sfx.bgmEnabled = true;
+                sfx.startBGM();
+            }
+        }
+
+        // Populate gentle menu DOM snowflakes
+        function buildMenuSnowflakes() {
+            const container = document.getElementById('menu-snow-layer');
+            container.innerHTML = '';
+            for (let i = 0; i < 36; i++) {
+                const flake = document.createElement('div');
+                flake.className = 'menu-snowflake';
+                const size = 3 + Math.random() * 5;
+                flake.style.width = `${size}px`;
+                flake.style.height = `${size}px`;
+                flake.style.left = `${Math.random() * 100}vw`;
+                flake.style.animationDuration = `${6 + Math.random() * 9}s`;
+                flake.style.animationDelay = `${-Math.random() * 10}s`;
+                container.appendChild(flake);
+            }
+        }
+        buildMenuSnowflakes();
+
+        /********************************************************************
+         * 3. THREE.JS 3D SCENE, 4 WINTER/CLASSIC STAGES & PEDESTALS
+         ********************************************************************/
+        const canvas = document.getElementById('game-canvas');
+        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x071426, 0.028);
+
+        const camera = new THREE.PerspectiveCamera(44, window.innerWidth / window.innerHeight, 0.1, 160);
+        camera.position.set(0, 2.1, 6.4);
+
+        const ambientLight = new THREE.AmbientLight(0xdbeafe, 0.72);
+        scene.add(ambientLight);
+
+        const mainSpot = new THREE.SpotLight(0xffffff, 1.35);
+        mainSpot.position.set(0, 15, 9);
+        mainSpot.castShadow = true;
+        mainSpot.shadow.mapSize.width = 1024;
+        mainSpot.shadow.mapSize.height = 1024;
+        scene.add(mainSpot);
+
+        const rimLightLeft = new THREE.PointLight(0x38bdf8, 2.3, 24);
+        rimLightLeft.position.set(-8, 5, -3);
+        scene.add(rimLightLeft);
+
+        const rimLightRight = new THREE.PointLight(0xfbbf24, 2.2, 24);
+        rimLightRight.position.set(8, 5, -3);
+        scene.add(rimLightRight);
+
+        // Live 3D Character Select Showcase Pedestals
+        const selectPedestalGroup = new THREE.Group();
+        scene.add(selectPedestalGroup);
+        let p1PedestalRingMat = null, p2PedestalRingMat = null;
+        let p1PedestalBeamMat = null, p2PedestalBeamMat = null;
+
+        function buildSelectPedestals() {
+            while (selectPedestalGroup.children.length > 0) selectPedestalGroup.remove(selectPedestalGroup.children[0]);
+            const makePedestal = (xPos, colorHex) => {
+                const g = new THREE.Group();
+                g.position.set(xPos, 0, 0);
+
+                const base = new THREE.Mesh(
+                    new THREE.CylinderGeometry(1.35, 1.58, 0.22, 24),
+                    new THREE.MeshStandardMaterial({ color: 0x0c1e38, roughness: 0.22, metalness: 0.75 })
+                );
+                base.position.y = 0.11;
+                base.receiveShadow = true;
+                g.add(base);
+
+                // Frosted Ice Rim Cap
+                const frostCap = new THREE.Mesh(
+                    new THREE.CylinderGeometry(1.32, 1.35, 0.03, 24),
+                    new THREE.MeshStandardMaterial({ color: 0xe0f2fe, roughness: 0.2, metalness: 0.3 })
+                );
+                frostCap.position.y = 0.22;
+                g.add(frostCap);
+
+                const ringMat = new THREE.MeshBasicMaterial({ color: colorHex, side: THREE.DoubleSide });
+                const ring = new THREE.Mesh(new THREE.RingGeometry(1.22, 1.40, 32), ringMat);
+                ring.rotation.x = -Math.PI / 2;
+                ring.position.y = 0.24;
+                g.add(ring);
+
+                const beamMat = new THREE.MeshBasicMaterial({
+                    color: colorHex,
+                    transparent: true,
+                    opacity: 0.14,
+                    side: THREE.DoubleSide
+                });
+                const beam = new THREE.Mesh(new THREE.CylinderGeometry(1.15, 1.25, 3.8, 20, 1, true), beamMat);
+                beam.position.y = 2.1;
+                g.add(beam);
+
+                selectPedestalGroup.add(g);
+                return { ringMat, beamMat };
+            };
+
+            const ped1 = makePedestal(-2.35, 0x38bdf8);
+            const ped2 = makePedestal(2.35, 0x38bdf8);
+            p1PedestalRingMat = ped1.ringMat;
+            p1PedestalBeamMat = ped1.beamMat;
+            p2PedestalRingMat = ped2.ringMat;
+            p2PedestalBeamMat = ped2.beamMat;
+        }
+        buildSelectPedestals();
+
+        // Offscreen Canvas Texture Generator for "HALLO WINTER" Glowing Arch Sign
+        function createHalloWinterSignTexture() {
+            const c = document.createElement('canvas');
+            c.width = 512;
+            c.height = 128;
+            const ctx = c.getContext('2d');
+            const grad = ctx.createLinearGradient(0, 0, 512, 128);
+            grad.addColorStop(0, '#082f49');
+            grad.addColorStop(0.5, '#0c4a6e');
+            grad.addColorStop(1, '#082f49');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, 512, 128);
+
+            ctx.strokeStyle = '#7dd3fc';
+            ctx.lineWidth = 8;
+            ctx.strokeRect(6, 6, 500, 116);
+
+            ctx.font = '900 44px Orbitron, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.shadowColor = '#38bdf8';
+            ctx.shadowBlur = 18;
+            ctx.fillStyle = '#ffffff';
+            ctx.fillText('❄ HALLO WINTER ❄', 256, 64);
+
+            const tex = new THREE.CanvasTexture(c);
+            tex.needsUpdate = true;
+            return tex;
+        }
+
+        // Arena Group & Dynamic Environment Elements
+        const arenaGroup = new THREE.Group();
+        scene.add(arenaGroup);
+        let floatingParticles3D = [];
+        let auroraRibbons = [];
+
+        function buildArena(stageIdx = 0) {
+            const st = STAGES[stageIdx] || STAGES[0];
+            while (arenaGroup.children.length > 0) arenaGroup.remove(arenaGroup.children[0]);
+            floatingParticles3D = [];
+            auroraRibbons = [];
+
+            scene.fog.color.setHex(st.fogColor);
+            renderer.setClearColor(st.fogColor);
+            rimLightLeft.color.setHex(st.rim1);
+            rimLightRight.color.setHex(st.rim2);
+
+            // Base Stage Floor
+            const floorGeo = new THREE.CylinderGeometry(14.2, 15.8, 0.8, 36);
+            const floorMat = new THREE.MeshStandardMaterial({
+                color: st.floorColor,
+                roughness: st.id === 'aurora_peak' ? 0.14 : 0.42,
+                metalness: st.id === 'aurora_peak' ? 0.65 : 0.32
+            });
+            const floorMesh = new THREE.Mesh(floorGeo, floorMat);
+            floorMesh.position.y = -0.4;
+            floorMesh.receiveShadow = true;
+            arenaGroup.add(floorMesh);
+
+            // Snow-Dusted Rim Layer for Winter Stages
+            if (st.snow) {
+                const snowRim = new THREE.Mesh(
+                    new THREE.RingGeometry(10.2, 14.1, 48),
+                    new THREE.MeshStandardMaterial({ color: 0xe2f1ff, roughness: 0.75, metalness: 0.05 })
+                );
+                snowRim.rotation.x = -Math.PI / 2;
+                snowRim.position.y = 0.012;
+                arenaGroup.add(snowRim);
+            }
+
+            // Glowing Elemental Ice / Neon Ring Border
+            const ringMesh = new THREE.Mesh(
+                new THREE.RingGeometry(11.4, 11.95, 64),
+                new THREE.MeshBasicMaterial({ color: st.gridColor, side: THREE.DoubleSide })
+            );
+            ringMesh.rotation.x = -Math.PI / 2;
+            ringMesh.position.y = 0.02;
+            arenaGroup.add(ringMesh);
+
+            const gridHelper = new THREE.GridHelper(22, 22, st.gridColor, st.gridColor);
+            gridHelper.position.y = 0.025;
+            gridHelper.material.opacity = st.id === 'classic_neon' ? 0.28 : 0.16;
+            gridHelper.material.transparent = true;
+            arenaGroup.add(gridHelper);
+
+            // Stage-Specific 3D Landmarks
+            if (st.id === 'hallo_courtyard') {
+                // 1) Glowing "HALLO WINTER" Dojo Arch in Background
+                const archGroup = new THREE.Group();
+                archGroup.position.set(0, 0, -9.8);
+                const pillarMat = new THREE.MeshStandardMaterial({ color: 0x7f1d1d, roughness: 0.4, metalness: 0.25 });
+                const goldTrimMat = new THREE.MeshBasicMaterial({ color: 0xfbbf24 });
+                const snowCapMat = new THREE.MeshStandardMaterial({ color: 0xf1f5f9, roughness: 0.7 });
+
+                [-3.8, 3.8].forEach(xP => {
+                    const col = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.38, 6.2, 12), pillarMat);
+                    col.position.set(xP, 3.1, 0);
+                    archGroup.add(col);
+                    const baseRing = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.55, 0.4, 12), snowCapMat);
+                    baseRing.position.set(xP, 0.2, 0);
+                    archGroup.add(baseRing);
+                });
+                const topBeam = new THREE.Mesh(new THREE.BoxGeometry(9.6, 0.55, 0.75), pillarMat);
+                topBeam.position.y = 6.1;
+                const snowRoof = new THREE.Mesh(new THREE.BoxGeometry(9.9, 0.25, 0.9), snowCapMat);
+                snowRoof.position.y = 6.45;
+                archGroup.add(topBeam, snowRoof);
+
+                // Glowing HALLO WINTER Signboard
+                const signMat = new THREE.MeshBasicMaterial({ map: createHalloWinterSignTexture() });
+                const signBoard = new THREE.Mesh(new THREE.PlaneGeometry(5.2, 1.3), signMat);
+                signBoard.position.set(0, 5.15, 0.35);
+                archGroup.add(signBoard);
+                arenaGroup.add(archGroup);
+
+                // 2) Snowy Pine Trees & Warm Festive Winter Lanterns
+                const trunkMat = new THREE.MeshStandardMaterial({ color: 0x3f2312, roughness: 0.8 });
+                const pineMat = new THREE.MeshStandardMaterial({ color: 0x0f4c3a, roughness: 0.7 });
+                const lanternMat = new THREE.MeshBasicMaterial({ color: 0xfde047 });
+
+                [-10.5, -7.2, 7.2, 10.5].forEach((xT, idx) => {
+                    const zT = idx === 0 || idx === 3 ? -5.5 : -8.5;
+                    const tree = new THREE.Group();
+                    tree.position.set(xT, 0, zT);
+                    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.3, 1.6, 8), trunkMat);
+                    trunk.position.y = 0.8;
+                    tree.add(trunk);
+                    for (let tier = 0; tier < 3; tier++) {
+                        const cone = new THREE.Mesh(new THREE.ConeGeometry(1.75 - tier * 0.38, 2.2, 8), pineMat);
+                        cone.position.y = 2.1 + tier * 1.4;
+                        const snowCone = new THREE.Mesh(new THREE.ConeGeometry(1.42 - tier * 0.3, 0.9, 8), snowCapMat);
+                        snowCone.position.y = 2.75 + tier * 1.4;
+                        tree.add(cone, snowCone);
+                    }
+                    arenaGroup.add(tree);
+
+                    // Warm Festive Lantern Post
+                    const post = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, 2.8, 8), trunkMat);
+                    post.position.set(xT * 0.72, 1.4, zT + 2.2);
+                    const bulb = new THREE.Mesh(new THREE.OctahedronGeometry(0.28, 0), lanternMat);
+                    bulb.position.set(xT * 0.72, 2.95, zT + 2.2);
+                    arenaGroup.add(post, bulb);
+                });
+            } else if (st.id === 'aurora_peak') {
+                // Crystalline Ice Spires around perimeter
+                const spireMat = new THREE.MeshStandardMaterial({
+                    color: 0x7dd3fc,
+                    roughness: 0.12,
+                    metalness: 0.35,
+                    emissive: 0x0284c7,
+                    emissiveIntensity: 0.35
+                });
+                for (let i = -4; i <= 4; i++) {
+                    if (i === 0) continue;
+                    const ang = (i / 4.5) * 1.3;
+                    const h = 4.5 + Math.abs(i) * 1.1;
+                    const spire = new THREE.Mesh(new THREE.ConeGeometry(0.85, h, 5), spireMat);
+                    spire.position.set(Math.sin(ang) * 12.2, h * 0.45, -Math.cos(ang) * 9.5 - 2);
+                    spire.rotation.z = -i * 0.08;
+                    arenaGroup.add(spire);
+                }
+
+                // Shimmering Green & Cyan Northern Lights (Aurora Ribbons)
+                [0x34d399, 0x38bdf8, 0xa855f7].forEach((col, i) => {
+                    const ribbon = new THREE.Mesh(
+                        new THREE.PlaneGeometry(34, 5.2, 18, 2),
+                        new THREE.MeshBasicMaterial({
+                            color: col,
+                            transparent: true,
+                            opacity: 0.28,
+                            side: THREE.DoubleSide
+                        })
+                    );
+                    ribbon.position.set(0, 9.2 + i * 1.5, -18 - i * 2.5);
+                    ribbon.userData = { baseY: 9.2 + i * 1.5, offset: i * 1.8 };
+                    arenaGroup.add(ribbon);
+                    auroraRibbons.push(ribbon);
+                });
+            } else if (st.id === 'frost_dojo') {
+                // Glowing Winter Crescent Moon + Snow-Covered Traditional Lantern Posts
+                const moon = new THREE.Mesh(
+                    new THREE.SphereGeometry(2.3, 24, 24),
+                    new THREE.MeshBasicMaterial({ color: 0xfef9c3 })
+                );
+                moon.position.set(7.5, 9.5, -22);
+                const moonMask = new THREE.Mesh(
+                    new THREE.SphereGeometry(2.25, 24, 24),
+                    new THREE.MeshBasicMaterial({ color: st.fogColor })
+                );
+                moonMask.position.set(8.5, 10.1, -21.2);
+                arenaGroup.add(moon, moonMask);
+
+                const woodMat = new THREE.MeshStandardMaterial({ color: 0x451a03, roughness: 0.7 });
+                const snowMat = new THREE.MeshStandardMaterial({ color: 0xf1f5f9, roughness: 0.75 });
+                const glowMat = new THREE.MeshBasicMaterial({ color: 0xfde047 });
+                for (let i = -3; i <= 3; i++) {
+                    if (i === 0) continue;
+                    const ang = (i / 3.5) * 1.15;
+                    const xP = Math.sin(ang) * 11.8;
+                    const zP = -Math.cos(ang) * 9.2 - 1.5;
+                    const p = new THREE.Mesh(new THREE.BoxGeometry(0.7, 5.5, 0.7), woodMat);
+                    p.position.set(xP, 2.75, zP);
+                    const cap = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.25, 1.1), snowMat);
+                    cap.position.set(xP, 5.6, zP);
+                    const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.55, 0.45), glowMat);
+                    lamp.position.set(xP, 4.9, zP + 0.35);
+                    arenaGroup.add(p, cap, lamp);
+                }
+            } else {
+                // Classic Neon Dojo Pillars
+                const pillarGeo = new THREE.BoxGeometry(0.9, 8.5, 0.9);
+                const pillarMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.4, metalness: 0.6 });
+                const stripGeo = new THREE.BoxGeometry(0.2, 7.5, 0.95);
+                const stripMat = new THREE.MeshBasicMaterial({ color: st.gridColor });
+                for (let i = -3; i <= 3; i++) {
+                    if (i === 0) continue;
+                    const pGroup = new THREE.Group();
+                    pGroup.add(new THREE.Mesh(pillarGeo, pillarMat), new THREE.Mesh(stripGeo, stripMat));
+                    const angle = (i / 3.5) * 1.15;
+                    pGroup.position.set(Math.sin(angle) * 12.5, 4.0, -Math.cos(angle) * 9.5 - 2);
+                    pGroup.lookAt(0, 3, 0);
+                    arenaGroup.add(pGroup);
+                }
+            }
+
+            // Drifting 3D Snowflakes (Winter Stages) or Embers (Classic Stage)
+            const pGeo = new THREE.OctahedronGeometry(st.snow ? 0.065 : 0.08, 0);
+            const pMat = new THREE.MeshBasicMaterial({ color: st.snow ? 0xffffff : st.gridColor });
+            const pCount = st.snow ? 90 : 45;
+            for (let i = 0; i < pCount; i++) {
+                const m = new THREE.Mesh(pGeo, pMat);
+                m.position.set((Math.random() - 0.5) * 24, Math.random() * 10 + 0.3, (Math.random() - 0.5) * 16 - 2);
+                m.userData = {
+                    isSnow: st.snow,
+                    speedY: st.snow ? -(0.9 + Math.random() * 1.4) : (0.5 + Math.random() * 1.2),
+                    phase: Math.random() * Math.PI * 2
+                };
+                arenaGroup.add(m);
+                floatingParticles3D.push(m);
+            }
+        }
+
+        /********************************************************************
+         * 4. PROCEDURAL 3D ARTICULATED FIGHTER MODEL GENERATOR (25 + WINTER)
+         ********************************************************************/
+        function createFighterMesh(charData) {
+            const root = new THREE.Group();
+            const c = charData.colors;
+            const id = charData.id;
+            const isWinter = !!charData.isWinterSkinActive;
+            const isFemale = charData.gender === 'girl';
+            const isFuki = id === 'fuki';
+
+            const skinMat = new THREE.MeshStandardMaterial({ color: c.skin, roughness: 0.45 });
+            const hairMat = new THREE.MeshStandardMaterial({ color: c.hair, roughness: 0.3, metalness: 0.18 });
+            const topMat = new THREE.MeshStandardMaterial({ color: c.top, roughness: 0.48, metalness: 0.25 });
+            const trimMat = new THREE.MeshBasicMaterial({ color: c.trim });
+            const pantsMat = new THREE.MeshStandardMaterial({ color: c.pants, roughness: 0.6 });
+            const furMat = new THREE.MeshStandardMaterial({ color: c.fur || 0xffffff, roughness: 0.85, metalness: 0.05 });
+            const gloveMat = new THREE.MeshStandardMaterial({
+                color: c.gloves,
+                roughness: 0.28,
+                metalness: 0.5,
+                emissive: c.aura,
+                emissiveIntensity: 0.28
+            });
+
+            // Hips / Pelvis
+            const hips = new THREE.Group();
+            hips.position.y = 1.05;
+            root.add(hips);
+
+            const pelvisWidth = isFemale ? 0.48 : 0.52;
+            const pelvisMesh = new THREE.Mesh(new THREE.BoxGeometry(pelvisWidth, 0.26, 0.33), (isFuki || id === 'rikoy' || id === 'mana') ? topMat : pantsMat);
+            pelvisMesh.castShadow = true;
+            hips.add(pelvisMesh);
+
+            const beltMesh = new THREE.Mesh(new THREE.BoxGeometry(pelvisWidth + 0.05, 0.1, 0.37), trimMat);
+            beltMesh.position.y = 0.08;
+            hips.add(beltMesh);
+
+            // Skirts, Qipao Panels & Winter Overcoat Tails
+            if (isFuki || id === 'rikoy') {
+                // Graceful Kung-Fu Qipao Side-Slit Skirt Panels
+                const frontPanel = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.48, 0.30), topMat);
+                frontPanel.position.set(0.24, -0.18, 0);
+                frontPanel.rotation.z = 0.12;
+                const frontTrim = new THREE.Mesh(new THREE.BoxGeometry(0.065, 0.49, 0.32), id === 'rikoy' ? furMat : trimMat);
+                frontTrim.position.set(0.235, -0.18, 0);
+                frontTrim.rotation.z = 0.12;
+
+                const backPanel = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.48, 0.30), topMat);
+                backPanel.position.set(-0.24, -0.18, 0);
+                backPanel.rotation.z = -0.14;
+                const backTrim = new THREE.Mesh(new THREE.BoxGeometry(0.065, 0.49, 0.32), id === 'rikoy' ? furMat : trimMat);
+                backTrim.position.set(-0.235, -0.18, 0);
+                backTrim.rotation.z = -0.14;
+
+                const sashBow = new THREE.Mesh(new THREE.OctahedronGeometry(0.11, 0), trimMat);
+                sashBow.position.set(0.27, 0.08, 0);
+                hips.add(frontTrim, frontPanel, backTrim, backPanel, sashBow);
+            } else if (isFemale && ['yuika', 'anne', 'honoka', 'himari', 'hanami', 'mana'].includes(id)) {
+                const skirtMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.40, 0.38, 14), topMat);
+                skirtMesh.position.y = -0.14;
+                const skirtTrim = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.39, 0.42, 0.07, 14),
+                    (isWinter || id === 'mana') ? furMat : trimMat
+                );
+                skirtTrim.position.y = -0.31;
+                hips.add(skirtMesh, skirtTrim);
+            } else if ((id === 'tkoi' && isWinter) || id === 'tryoma' || id === 'rentaro') {
+                // Winter Parka / Overcoat Lower Skirt & White Fur Hem
+                const coatTail = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.36, 0.38), topMat);
+                coatTail.position.y = -0.12;
+                const furHem = new THREE.Mesh(new THREE.BoxGeometry(0.59, 0.09, 0.41), furMat);
+                furHem.position.y = -0.28;
+                hips.add(coatTail, furHem);
+            }
+
+            // Torso / Chest
+            const torso = new THREE.Group();
+            torso.position.y = 0.15;
+            hips.add(torso);
+
+            const chestWidth = id === 'tkoi' ? 0.70 : (['fumio', 'rintaro', 'rentaro', 'joe'].includes(id) ? 0.64 : (isFemale ? 0.46 : 0.55));
+            if (isFemale) {
+                const waistMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.23, 0.20, 0.34, 12), topMat);
+                waistMesh.position.y = 0.17;
+                waistMesh.castShadow = true;
+                torso.add(waistMesh);
+
+                const upperBodice = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.23, 0.38, 12), topMat);
+                upperBodice.position.y = 0.48;
+                upperBodice.castShadow = true;
+                torso.add(upperBodice);
+
+                const bustContour = new THREE.Mesh(new THREE.SphereGeometry(0.185, 12, 10), topMat);
+                bustContour.scale.set(0.95, 0.78, 1.24);
+                bustContour.position.set(0.11, 0.47, 0);
+                torso.add(bustContour);
+
+                const bodiceTrim = new THREE.Mesh(new THREE.CylinderGeometry(0.268, 0.235, 0.34, 12, 1, false, -0.6, 1.2), trimMat);
+                bodiceTrim.position.y = 0.48;
+                torso.add(bodiceTrim);
+
+                const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.14, 0.11, 12), trimMat);
+                collar.position.y = 0.70;
+                torso.add(collar);
+            } else {
+                const chestMesh = new THREE.Mesh(new THREE.BoxGeometry(chestWidth, 0.68, 0.38), topMat);
+                chestMesh.position.y = 0.34;
+                chestMesh.castShadow = true;
+                torso.add(chestMesh);
+
+                if (id === 'haruto') {
+                    // Quilted Winter Puffer Vest horizontal ribs
+                    for (let q = 0; q < 3; q++) {
+                        const rib = new THREE.Mesh(new THREE.BoxGeometry(chestWidth + 0.04, 0.13, 0.42), q === 1 ? trimMat : topMat);
+                        rib.position.y = 0.18 + q * 0.18;
+                        torso.add(rib);
+                    }
+                } else {
+                    const emblemMesh = new THREE.Mesh(new THREE.BoxGeometry(chestWidth * 0.58, 0.48, 0.40), trimMat);
+                    emblemMesh.position.y = 0.36;
+                    torso.add(emblemMesh);
+                }
+            }
+
+            // Plush Fur Collars, Winter Capes, Scarves & Crystal Shoulder Guards
+            if ((isWinter && ['tkoi', 'yuika', 'hanami'].includes(id)) || ['tryoma', 'mana', 'rikoy', 'rentaro'].includes(id)) {
+                const furCollar = new THREE.Mesh(new THREE.TorusGeometry(isFemale ? 0.22 : 0.28, 0.085, 8, 16), furMat);
+                furCollar.rotation.x = Math.PI / 2;
+                furCollar.position.y = 0.68;
+                torso.add(furCollar);
+            }
+            if (id === 'yuika' && isWinter) {
+                // Yuika Winter Fur Capelet
+                const capelet = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.38, 0.28, 14), furMat);
+                capelet.position.y = 0.56;
+                torso.add(capelet);
+            }
+            if (id === 'tkoi' && isWinter) {
+                // Golden Clasps on T.Koi's Winter Dragon Overcoat
+                const goldMat = new THREE.MeshBasicMaterial({ color: 0xfbbf24 });
+                [0.24, 0.42, 0.56].forEach(yC => {
+                    const clasp = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.05, 0.42), goldMat);
+                    clasp.position.set(0.28, yC, 0);
+                    torso.add(clasp);
+                });
+            }
+            if (id === 'tryoma' || id === 'haruto') {
+                // Flowing Crimson / Red Winter Scarf
+                const scarfMat = new THREE.MeshStandardMaterial({ color: c.scarf || 0xe11d48, roughness: 0.65 });
+                const scarfWrap = new THREE.Mesh(new THREE.TorusGeometry(0.24, 0.07, 8, 16), scarfMat);
+                scarfWrap.rotation.x = Math.PI / 2;
+                scarfWrap.position.y = 0.67;
+                const scarfTail = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.52, 0.16), scarfMat);
+                scarfTail.position.set(-0.26, 0.44, 0.08);
+                scarfTail.rotation.z = 0.35;
+                torso.add(scarfWrap, scarfTail);
+            }
+            if (id === 'rentaro') {
+                // Icy Crystal Shoulder Guards
+                const iceCrystalMat = new THREE.MeshStandardMaterial({ color: 0x67e8f9, roughness: 0.15, metalness: 0.4, emissive: 0x06b6d4, emissiveIntensity: 0.4 });
+                [-0.38, 0.38].forEach(zS => {
+                    const guard = new THREE.Mesh(new THREE.OctahedronGeometry(0.22, 0), iceCrystalMat);
+                    guard.position.set(0, 0.64, zS);
+                    torso.add(guard);
+                });
+            }
+
+            // Head & Facial Features
+            const head = new THREE.Group();
+            head.position.y = 0.82;
+            torso.add(head);
+
+            if (isFemale) {
+                const femHead = new THREE.Mesh(new THREE.SphereGeometry(0.21, 16, 16), skinMat);
+                femHead.scale.set(0.95, 1.04, 0.92);
+                femHead.castShadow = true;
+                head.add(femHead);
+
+                const eyeWhiteMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+                const irisMat = new THREE.MeshBasicMaterial({ color: c.aura });
+                const lashMat = new THREE.MeshBasicMaterial({ color: 0x09050d });
+                const blushMat = new THREE.MeshBasicMaterial({ color: 0xff7eb6, transparent: true, opacity: 0.58 });
+
+                [-0.085, 0.085].forEach(zPos => {
+                    const eyeW = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.055, 0.065), eyeWhiteMat);
+                    eyeW.position.set(0.18, 0.03, zPos);
+                    const iris = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.045, 0.042), irisMat);
+                    iris.position.set(0.185, 0.03, zPos);
+                    const lash = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.016, 0.075), lashMat);
+                    lash.position.set(0.186, 0.065, zPos);
+                    lash.rotation.x = zPos > 0 ? -0.18 : 0.18;
+                    const blush = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.03, 0.05), blushMat);
+                    blush.position.set(0.18, -0.03, zPos * 1.25);
+                    head.add(eyeW, iris, lash, blush);
+                });
+            } else {
+                const skull = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.38, 0.36), skinMat);
+                skull.castShadow = true;
+                head.add(skull);
+
+                const eyeColor = (id === 'tkoi' && isWinter) ? 0x38bdf8 : (id === 'tkoi' ? 0xffd700 : 0xffffff);
+                const eyeMat = new THREE.MeshBasicMaterial({ color: eyeColor });
+                const leftEye = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.04, 0.07), eyeMat);
+                leftEye.position.set(0.17, 0.04, 0.09);
+                const rightEye = leftEye.clone();
+                rightEye.position.z = -0.09;
+                head.add(leftEye, rightEye);
+            }
+
+            // Hairstyles & Headgear for All 25 Fighters
+            if (['aisei', 'yayoi', 'tkoi', 'sowa', 'haruaki', 'kyoma', 'sora', 'rintaro', 'tryoma', 'haruto', 'rentaro'].includes(id)) {
+                for (let i = 0; i < 6; i++) {
+                    const spike = new THREE.Mesh(new THREE.ConeGeometry(0.11, 0.33, 5), hairMat);
+                    spike.position.set(-0.05 + (i % 2) * 0.08, 0.24, (i - 2.5) * 0.06);
+                    spike.rotation.z = 0.35;
+                    spike.rotation.x = (i - 2.5) * 0.2;
+                    head.add(spike);
+                }
+                if (id === 'haruto') {
+                    // Snow Goggles resting on forehead
+                    const goggleBand = new THREE.Mesh(new THREE.BoxGeometry(0.39, 0.08, 0.39), new THREE.MeshBasicMaterial({ color: 0x0f172a }));
+                    goggleBand.position.y = 0.14;
+                    const goggleLens = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.10, 0.30), new THREE.MeshBasicMaterial({ color: 0x38bdf8 }));
+                    goggleLens.position.set(0.19, 0.15, 0);
+                    head.add(goggleBand, goggleLens);
+                }
+                if (id === 'sowa') {
+                    const bandana = new THREE.Mesh(new THREE.BoxGeometry(0.39, 0.07, 0.39), trimMat);
+                    bandana.position.y = 0.11;
+                    head.add(bandana);
+                }
+                if (id === 'kyoma') {
+                    const visor = new THREE.Mesh(new THREE.BoxGeometry(0.10, 0.09, 0.39), trimMat);
+                    visor.position.set(0.18, 0.05, 0);
+                    head.add(visor);
+                }
+                if (id === 'haruaki') {
+                    for (let b = 0; b < 7; b++) {
+                        const bead = new THREE.Mesh(new THREE.SphereGeometry(0.055, 8, 8), trimMat);
+                        const ang = (b / 6) * Math.PI - Math.PI / 2;
+                        bead.position.set(-0.12, 0.55 + Math.cos(ang) * 0.32, Math.sin(ang) * 0.38);
+                        torso.add(bead);
+                    }
+                }
+            } else if (id === 'fumio' || id === 'joe') {
+                const hairTop = new THREE.Mesh(new THREE.BoxGeometry(0.41, 0.18, 0.39), hairMat);
+                hairTop.position.set(id === 'joe' ? 0.06 : 0, 0.19, 0);
+                head.add(hairTop);
+                if (id === 'fumio') {
+                    const band = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.08, 0.4), trimMat);
+                    band.position.y = 0.1;
+                    const tail = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.07, 0.12), trimMat);
+                    tail.position.set(-0.28, 0.06, 0);
+                    tail.rotation.z = 0.3;
+                    head.add(band, tail);
+                } else {
+                    const shades = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.38), new THREE.MeshBasicMaterial({ color: 0x09090b }));
+                    shades.position.set(0.18, 0.05, 0);
+                    head.add(shades);
+                }
+            } else if (id === 'sakito' || id === 'ao' || id === 'yuto') {
+                const hairCap = new THREE.Mesh(new THREE.BoxGeometry(0.39, 0.18, 0.39), hairMat);
+                hairCap.position.y = 0.16;
+                head.add(hairCap);
+                if (id === 'sakito') {
+                    const topknot = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.08, 0.28, 8), hairMat);
+                    topknot.position.set(-0.12, 0.30, 0);
+                    topknot.rotation.z = 0.45;
+                    head.add(topknot);
+                } else if (id === 'ao') {
+                    const mane = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.55, 0.34), hairMat);
+                    mane.position.set(-0.20, -0.05, 0);
+                    mane.rotation.z = 0.22;
+                    head.add(mane);
+                } else if (id === 'yuto') {
+                    const visor = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.09, 0.39), trimMat);
+                    visor.position.set(0.18, 0.05, 0);
+                    head.add(visor);
+                }
+            } else if (id === 'fuki' || id === 'himari') {
+                const hairDome = new THREE.Mesh(new THREE.SphereGeometry(0.22, 14, 14), hairMat);
+                hairDome.position.set(-0.02, 0.05, 0);
+                const bangs = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.11, 0.32), hairMat);
+                bangs.position.set(0.15, 0.14, 0);
+                bangs.rotation.z = -0.25;
+                head.add(hairDome, bangs);
+                [-0.20, 0.20].forEach(zSide => {
+                    const bun = new THREE.Mesh(new THREE.SphereGeometry(0.125, 12, 12), hairMat);
+                    bun.position.set(-0.05, 0.23, zSide);
+                    const bunRing = new THREE.Mesh(new THREE.CylinderGeometry(0.135, 0.135, 0.06, 12), trimMat);
+                    bunRing.position.set(-0.05, 0.21, zSide);
+                    bunRing.rotation.x = zSide > 0 ? 0.4 : -0.4;
+                    const ribbon = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.42, 0.03), trimMat);
+                    ribbon.position.set(-0.14, -0.02, zSide * 1.15);
+                    ribbon.rotation.z = -0.28;
+                    head.add(bun, bunRing, ribbon);
+                    if (id === 'himari') {
+                        const catEar = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.18, 4), trimMat);
+                        catEar.position.set(0.04, 0.28, zSide * 0.8);
+                        head.add(catEar);
+                    }
+                });
+            } else if (id === 'mana') {
+                // Mana: Long flowing silver-blue hair + Fluffy White Knit Beret with Ice-Gem Bow
+                const hairDome = new THREE.Mesh(new THREE.SphereGeometry(0.22, 14, 14), hairMat);
+                hairDome.position.set(-0.02, 0.04, 0);
+                const longHair = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.62, 0.38), hairMat);
+                longHair.position.set(-0.18, -0.18, 0);
+                longHair.rotation.z = -0.15;
+                const beret = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.20, 0.13, 14), furMat);
+                beret.position.set(-0.02, 0.23, 0);
+                beret.rotation.z = 0.14;
+                const iceGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.08, 0), new THREE.MeshBasicMaterial({ color: 0x38bdf8 }));
+                iceGem.position.set(0.16, 0.24, 0.12);
+                head.add(hairDome, longHair, beret, iceGem);
+            } else if (id === 'rikoy') {
+                // Riko.Y: Twin Braids, Snow-Crystal Ribbons & Cozy Earmuffs
+                const hairDome = new THREE.Mesh(new THREE.SphereGeometry(0.22, 14, 14), hairMat);
+                hairDome.position.set(-0.02, 0.05, 0);
+                head.add(hairDome);
+                const earmuffBand = new THREE.Mesh(new THREE.TorusGeometry(0.23, 0.028, 8, 16, Math.PI), furMat);
+                earmuffBand.rotation.y = Math.PI / 2;
+                earmuffBand.position.y = 0.06;
+                head.add(earmuffBand);
+                [-0.22, 0.22].forEach(zSide => {
+                    const muff = new THREE.Mesh(new THREE.SphereGeometry(0.09, 10, 10), furMat);
+                    muff.position.set(0, 0.04, zSide);
+                    const braid = new THREE.Mesh(new THREE.ConeGeometry(0.085, 0.56, 8), hairMat);
+                    braid.position.set(-0.10, -0.16, zSide * 0.9);
+                    braid.rotation.x = Math.PI;
+                    const crystalRibbon = new THREE.Mesh(new THREE.OctahedronGeometry(0.075, 0), new THREE.MeshBasicMaterial({ color: 0x34d399 }));
+                    crystalRibbon.position.set(-0.12, -0.32, zSide * 0.9);
+                    head.add(muff, braid, crystalRibbon);
+                });
+            } else if (id === 'hanami' || id === 'yuika') {
+                const hairDome = new THREE.Mesh(new THREE.SphereGeometry(0.22, 14, 14), hairMat);
+                hairDome.position.set(-0.02, 0.06, 0);
+                const ponytail = new THREE.Mesh(new THREE.ConeGeometry(0.13, 0.62, 10), hairMat);
+                ponytail.position.set(-0.26, 0.02, 0);
+                ponytail.rotation.z = -2.4;
+                const tiaraMat = isWinter ? new THREE.MeshBasicMaterial({ color: 0x7dd3fc }) : trimMat;
+                const tiara = new THREE.Mesh(new THREE.OctahedronGeometry(0.11, 0), tiaraMat);
+                tiara.position.set(0.12, 0.24, 0);
+                head.add(hairDome, ponytail, tiara);
+            } else if (id === 'anne' || id === 'honoka') {
+                const hairDome = new THREE.Mesh(new THREE.SphereGeometry(0.22, 14, 14), hairMat);
+                hairDome.position.set(-0.02, 0.06, 0);
+                head.add(hairDome);
+                [-0.22, 0.22].forEach(zSide => {
+                    const drill = new THREE.Mesh(new THREE.ConeGeometry(0.10, 0.52, 8), hairMat);
+                    drill.position.set(-0.08, -0.04, zSide);
+                    drill.rotation.x = Math.PI;
+                    drill.rotation.z = -0.2;
+                    head.add(drill);
+                });
+            } else if (id === 'sara') {
+                const bob = new THREE.Mesh(new THREE.SphereGeometry(0.23, 14, 14), hairMat);
+                bob.scale.set(1.0, 1.05, 1.08);
+                bob.position.set(-0.01, 0.05, 0);
+                const scarf = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.12, 0.34), trimMat);
+                scarf.position.set(-0.14, -0.16, 0);
+                head.add(bob, scarf);
+            }
+
+            // Master Cape / Wings
+            if (['tkoi', 'sakito', 'yuika', 'sora', 'rintaro'].includes(id)) {
+                const capeMat = (id === 'tkoi' && isWinter) ? topMat : trimMat;
+                const cape = new THREE.Mesh(new THREE.BoxGeometry(0.20, 0.78, 0.64), capeMat);
+                cape.position.set(-0.25, 0.32, 0);
+                cape.rotation.z = 0.18;
+                torso.add(cape);
+            }
+
+            // Articulated Arms
+            function buildArm(isLeft) {
+                const shoulder = new THREE.Group();
+                const zOff = isFemale ? 0.29 : 0.34;
+                shoulder.position.set(0, 0.58, isLeft ? zOff : -zOff);
+
+                if (isFemale) {
+                    const capSleeve = new THREE.Mesh(new THREE.SphereGeometry(0.13, 10, 10), topMat);
+                    capSleeve.position.y = -0.02;
+                    shoulder.add(capSleeve);
+                    const sleeveCuff = new THREE.Mesh(new THREE.CylinderGeometry(0.105, 0.105, 0.05, 10), isWinter ? furMat : trimMat);
+                    sleeveCuff.position.y = -0.09;
+                    shoulder.add(sleeveCuff);
+                    const slenderArm = new THREE.Mesh(new THREE.CylinderGeometry(0.074, 0.066, 0.42, 10), isWinter ? topMat : skinMat);
+                    slenderArm.position.y = -0.22;
+                    slenderArm.castShadow = true;
+                    shoulder.add(slenderArm);
+                    const bangle = new THREE.Mesh(new THREE.CylinderGeometry(0.10, 0.10, 0.08, 12), isWinter ? furMat : trimMat);
+                    bangle.position.y = -0.38;
+                    shoulder.add(bangle);
+                    const fist = new THREE.Mesh(new THREE.SphereGeometry(0.115, 10, 10), gloveMat);
+                    fist.scale.set(1.1, 1.25, 0.85);
+                    fist.position.y = -0.46;
+                    fist.castShadow = true;
+                    shoulder.add(fist);
+                    return { shoulder, fist };
+                }
+
+                const armMat = isWinter ? topMat : skinMat;
+                const upperArm = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.45, 0.22), armMat);
+                upperArm.position.y = -0.18;
+                upperArm.castShadow = true;
+                shoulder.add(upperArm);
+
+                const fistSize = ['yuto', 'fumio', 'rintaro', 'rentaro', 'tkoi', 'haruto'].includes(id) ? 0.31 : 0.27;
+                const fist = new THREE.Mesh(new THREE.BoxGeometry(fistSize, fistSize, fistSize), gloveMat);
+                fist.position.y = -0.45;
+                fist.castShadow = true;
+                shoulder.add(fist);
+                return { shoulder, fist };
+            }
+
+            const leftArm = buildArm(true);
+            const rightArm = buildArm(false);
+            torso.add(leftArm.shoulder, rightArm.shoulder);
+
+            // Articulated Legs
+            function buildLeg(isLeft) {
+                const hipJoint = new THREE.Group();
+                hipJoint.position.set(0, -0.1, isLeft ? 0.14 : -0.14);
+
+                if (isFemale) {
+                    const thigh = new THREE.Mesh(new THREE.CylinderGeometry(0.115, 0.085, 0.56, 12), pantsMat);
+                    thigh.position.y = -0.28;
+                    thigh.castShadow = true;
+                    hipJoint.add(thigh);
+
+                    const bootColor = (isFuki || id === 'mana' || (id === 'yuika' && isWinter)) ? 0xf8fafc : c.gloves;
+                    const bootMat = new THREE.MeshStandardMaterial({ color: bootColor, roughness: 0.3, metalness: 0.2 });
+                    const bootCuff = new THREE.Mesh(new THREE.CylinderGeometry(0.098, 0.09, 0.22, 12), bootMat);
+                    bootCuff.position.y = -0.50;
+                    hipJoint.add(bootCuff);
+
+                    const ankleAccent = new THREE.Mesh(
+                        new THREE.CylinderGeometry(0.105, 0.105, 0.05, 12),
+                        id === 'rikoy' ? new THREE.MeshBasicMaterial({ color: 0x34d399 }) : (isWinter ? furMat : trimMat)
+                    );
+                    ankleAccent.position.y = -0.41;
+                    hipJoint.add(ankleAccent);
+
+                    const boot = new THREE.Mesh(new THREE.BoxGeometry(0.33, 0.18, 0.22), bootMat);
+                    boot.position.set(0.05, -0.63, 0);
+                    boot.castShadow = true;
+                    hipJoint.add(boot);
+                    return { hipJoint, boot };
+                }
+
+                const thigh = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.58, 0.24), pantsMat);
+                thigh.position.y = -0.28;
+                thigh.castShadow = true;
+                hipJoint.add(thigh);
+
+                const boot = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.22, 0.26), gloveMat);
+                boot.position.set(0.05, -0.62, 0);
+                boot.castShadow = true;
+                hipJoint.add(boot);
+                return { hipJoint, boot };
+            }
+
+            const leftLeg = buildLeg(true);
+            const rightLeg = buildLeg(false);
+            hips.add(leftLeg.hipJoint, rightLeg.hipJoint);
+
+            // Energy Guard Shield Sphere
+            const shieldMat = new THREE.MeshBasicMaterial({
+                color: c.aura,
+                wireframe: true,
+                transparent: true,
+                opacity: 0.0
+            });
+            const shieldMesh = new THREE.Mesh(new THREE.SphereGeometry(1.15, 18, 18), shieldMat);
+            shieldMesh.position.y = 1.15;
+            root.add(shieldMesh);
+
+            // Floor Elemental Aura Ring
+            const auraRingMat = new THREE.MeshBasicMaterial({
+                color: c.aura,
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: 0.58
+            });
+            const auraRing = new THREE.Mesh(new THREE.RingGeometry(0.65, 0.88, 24), auraRingMat);
+            auraRing.rotation.x = -Math.PI / 2;
+            auraRing.position.y = 0.03;
+            root.add(auraRing);
+
+            root.scale.set(charData.scale.x, charData.scale.y, charData.scale.z);
+
+            return {
+                root, hips, torso, head,
+                leftArm: leftArm.shoulder, rightArm: rightArm.shoulder,
+                leftLeg: leftLeg.hipJoint, rightLeg: rightLeg.hipJoint,
+                shieldMat, auraRing, auraRingMat
+            };
+        }
+
+        /********************************************************************
+         * 5. PARTICLE SPARKS, ICE CRYSTALS & SHOCKWAVE FX
+         ********************************************************************/
+        const activeParticles = [];
+        const activeShockwaves = [];
+
+        function spawnHitSparks(x, y, z, colorHex, count = 18, scale = 1.0) {
+            const geo = new THREE.OctahedronGeometry(0.09 * scale, 0);
+            const mat = new THREE.MeshBasicMaterial({ color: colorHex });
+            for (let i = 0; i < count; i++) {
+                const m = new THREE.Mesh(geo, mat);
+                m.position.set(x, y, z);
+                const angle = Math.random() * Math.PI * 2;
+                const speed = (2.5 + Math.random() * 6.8) * scale;
+                m.userData = {
+                    vx: Math.cos(angle) * speed,
+                    vy: (Math.random() - 0.15) * speed,
+                    vz: (Math.sin(angle) - 0.5) * speed,
+                    life: 0.30 + Math.random() * 0.20
+                };
+                scene.add(m);
+                activeParticles.push(m);
+            }
+        }
+
+        function spawnShockwaveRing(x, y, z, colorHex, maxRadius = 2.8) {
+            const geo = new THREE.RingGeometry(0.2, 0.38, 28);
+            const mat = new THREE.MeshBasicMaterial({ color: colorHex, side: THREE.DoubleSide, transparent: true, opacity: 0.95 });
+            const ring = new THREE.Mesh(geo, mat);
+            ring.position.set(x, y, z);
+            ring.rotation.y = Math.PI / 2;
+            ring.userData = { scaleSpeed: maxRadius * 5.5, life: 0.28 };
+            scene.add(ring);
+            activeShockwaves.push(ring);
+        }
+
+        function spawnFloatingDamageText(worldX, worldY, text, colorClass = 'text-amber-300', sizeClass = 'text-2xl') {
+            const vec = new THREE.Vector3(worldX, worldY, 0);
+            vec.project(camera);
+            const screenX = (vec.x * 0.5 + 0.5) * window.innerWidth;
+            const screenY = (-(vec.y * 0.5) + 0.5) * window.innerHeight;
+            const el = document.createElement('div');
+            el.className = `dmg-popup ${colorClass} ${sizeClass}`;
+            el.style.left = `${screenX}px`;
+            el.style.top = `${screenY}px`;
+            el.textContent = text;
+            document.getElementById('floating-fx-container').appendChild(el);
+            setTimeout(() => el.remove(), 780);
+        }
+
+        /********************************************************************
+         * 6. FIGHTER COMBAT STATE CLASS
+         ********************************************************************/
+        const MOVE_DATA = {
+            lp: { startup: 0.05, active: 0.10, recovery: 0.12, dmg: 7, heatGain: 9, range: 1.60, hitStun: 0.22, knockback: 0.35, launchY: 0, type: 'light', label: 'JAB' },
+            hk: { startup: 0.11, active: 0.15, recovery: 0.22, dmg: 15, heatGain: 15, range: 1.95, hitStun: 0.40, knockback: 1.85, launchY: 3.4, type: 'heavy', label: 'HEAVY KICK!' },
+            special: { startup: 0.09, active: 0.18, recovery: 0.22, dmg: 18, heatGain: 16, range: 2.25, hitStun: 0.45, knockback: 1.4, launchY: 7.4, type: 'heavy', label: 'LAUNCHER!' },
+            rage: { startup: 0.14, active: 0.35, recovery: 0.30, dmg: 38, heatGain: 0, range: 3.30, hitStun: 0.85, knockback: 3.2, launchY: 9.6, type: 'special', label: 'RAGE ART!!' }
+        };
+
+        class FighterInstance {
+            constructor(playerIndex, charIndex, useWinterSkin = true) {
+                this.playerIndex = playerIndex;
+                this.useWinterSkin = useWinterSkin;
+                this.previewSpin = false;
+                this.previewYawOffset = 0;
+                this.roundsWon = 0;
+                this.setCharacter(charIndex, useWinterSkin);
+                this.resetForRound();
+            }
+
+            setCharacter(charIndex, useWinterSkin = this.useWinterSkin) {
+                this.charIndex = charIndex;
+                this.useWinterSkin = useWinterSkin;
+                this.data = getEffectiveCharData(charIndex, useWinterSkin);
+                if (this.rig && this.rig.root) scene.remove(this.rig.root);
+                this.rig = createFighterMesh(this.data);
+                scene.add(this.rig.root);
+            }
+
+            resetForRound() {
+                this.hp = 100;
+                this.maxHp = 100;
+                this.energy = 50;
+                this.x = this.playerIndex === 1 ? -2.6 : 2.6;
+                this.y = 0;
+                this.vx = 0;
+                this.vy = 0;
+                this.facing = this.playerIndex === 1 ? 1 : -1;
+                this.state = 'idle';
+                this.stateTimer = 0;
+                this.currentMove = null;
+                this.moveTimer = 0;
+                this.moveHasHit = false;
+                this.comboStep = 0;
+                this.comboWindow = 0;
+                this.comboHits = 0;
+                this.comboDamage = 0;
+                this.comboResetTimer = 0;
+                this.isRage = false;
+                this.invulnTimer = 0;
+                this.animTime = Math.random() * 10;
+                this.updateTransform();
+            }
+
+            updateTransform() {
+                this.rig.root.position.set(this.x, this.y, 0);
+                this.rig.root.rotation.y = this.facing === 1 ? 0 : Math.PI;
+            }
+
+            canAct() {
+                return this.state === 'idle' || this.state === 'walk' || this.state === 'crouch' || this.state === 'block';
+            }
+
+            startAttack(moveKey) {
+                if (moveKey === 'rage') {
+                    if (!this.isRage && this.energy < 100) return false;
+                    this.energy = 0;
+                    triggerRageArtCinematic(this);
+                }
+
+                if (moveKey === 'lp' && this.comboWindow > 0 && this.comboStep < 2) {
+                    this.comboStep++;
+                } else if ((moveKey === 'special' || moveKey === 'hk') && this.comboWindow > 0 && this.comboStep >= 1) {
+                    this.comboStep = 3;
+                } else {
+                    this.comboStep = 1;
+                }
+
+                this.state = 'attack';
+                this.currentMove = moveKey;
+                this.moveTimer = 0;
+                this.moveHasHit = false;
+                this.comboWindow = 0.44;
+
+                const lungeSpeed = moveKey === 'rage' ? 9.5 : (moveKey === 'special' ? 6.2 : (this.comboStep === 3 ? 4.5 : 2.3));
+                this.vx = this.facing * lungeSpeed;
+
+                sfx.playWhoosh();
+                return true;
+            }
+        }
+
+        /********************************************************************
+         * 7. GAME STATE, SEASON THEME & MATCH FLOW CONTROLLER
+         ********************************************************************/
+        let isWinterEdition = true;
+        let gameState = 'menu';
+        let gameMode = 'cpu';
+        let aiDifficulty = 'normal';
+        let dummyBehavior = 'stand';
+        let selectedStage = 0; // Default: HALLO Snowy Courtyard
+        let activeSelectCursor = 1;
+        let p1CharIdx = 20; // T.Ryoma (Winter Exclusive!)
+        let p2CharIdx = 4;  // T.Koi (Winter Edition!)
+
+        let roundNumber = 1;
+        let roundTimer = 60;
+        let roundTimerAccum = 0;
+        let hitStopTimer = 0;
+        let slowMoFactor = 1.0;
+        let cameraShake = 0;
+        let rageCinemaTimer = 0;
+        let rageActor = null;
+
+        buildArena(selectedStage);
+        const p1 = new FighterInstance(1, p1CharIdx, true);
+        const p2 = new FighterInstance(2, p2CharIdx, true);
+
+        /********************************************************************
+         * 8. PS5 DUALSENSE GAMEPAD + 2P KEYBOARD + TOUCH INPUT MANAGER
+         ********************************************************************/
+        const keysDown = {};
+        const touchState = { up: false, down: false, left: false, right: false, block: false };
+        let pad1TargetPlayer = 1;
+        const prevPadButtons = { 0: {}, 1: {} };
+
+        window.addEventListener('keydown', (e) => {
+            keysDown[e.code] = true;
+            if (gameState === 'menu' && e.code === 'Enter') {
+                startMatch();
+            } else if (gameState === 'victory' && e.code === 'Enter') {
+                rematch();
+            } else if (e.code === 'Escape') {
+                openPauseMenu();
+            }
+
+            if (gameState === 'fight') {
+                // Player 1: F (Light Punch), G (Heavy Kick), H (Special/Launcher), R (Rage Art)
+                if (p1.canAct()) {
+                    if (e.code === 'KeyF') p1.startAttack('lp');
+                    if (e.code === 'KeyG') p1.startAttack('hk');
+                    if (e.code === 'KeyH') p1.startAttack('special');
+                    if (e.code === 'KeyR') p1.startAttack('rage');
+                }
+                // Player 2 (2P Local Versus): J (LP), K (Heavy Kick), L (Special/Launcher), U (Rage Art)
+                if (gameMode === 'versus' && p2.canAct()) {
+                    if (e.code === 'KeyJ') p2.startAttack('lp');
+                    if (e.code === 'KeyK') p2.startAttack('hk');
+                    if (e.code === 'KeyL') p2.startAttack('special');
+                    if (e.code === 'KeyU') p2.startAttack('rage');
+                }
+            }
+        });
+
+        window.addEventListener('keyup', (e) => { keysDown[e.code] = false; });
+
+        function setTouchInput(dir, val) { touchState[dir] = val; }
+        function triggerTouchAttack(moveKey) {
+            if (gameState === 'fight' && p1.canAct()) p1.startAttack(moveKey);
+        }
+
+        function triggerGamepadRumble(playerNum, strong = 0.7, weak = 0.4, duration = 140) {
+            try {
+                if (!navigator.getGamepads) return;
+                const pads = navigator.getGamepads();
+                for (let i = 0; i < pads.length; i++) {
+                    const pad = pads[i];
+                    if (!pad) continue;
+                    const assignedPlayer = (i === 0) ? pad1TargetPlayer : 2;
+                    if (assignedPlayer === playerNum && pad.vibrationActuator && pad.vibrationActuator.playEffect) {
+                        pad.vibrationActuator.playEffect('dual-rumble', {
+                            startDelay: 0,
+                            duration: duration,
+                            weakMagnitude: weak,
+                            strongMagnitude: strong
+                        }).catch(() => {});
+                    }
+                }
+            } catch (e) {}
+        }
+
+        function pollGamepads() {
+            if (!navigator.getGamepads) return { p1Pad: null, p2Pad: null };
+            const pads = navigator.getGamepads();
+            const gp1Dot = document.getElementById('gp1-dot');
+            const gp1Label = document.getElementById('gp1-label');
+            const gp2Dot = document.getElementById('gp2-dot');
+            const gp2Label = document.getElementById('gp2-label');
+
+            if (pads[0] && pads[0].connected) {
+                gp1Dot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399] inline-block';
+                gp1Label.textContent = 'PS5 Pad 1: Ready';
+                gp1Label.className = 'font-bold text-emerald-300';
+            } else {
+                gp1Dot.className = 'w-2.5 h-2.5 rounded-full bg-slate-600 inline-block';
+                gp1Label.textContent = 'PS5 Pad 1: Off';
+                gp1Label.className = 'font-bold text-slate-400';
+            }
+
+            if (pads[1] && pads[1].connected) {
+                gp2Dot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399] inline-block';
+                gp2Label.textContent = 'PS5 Pad 2: Ready';
+                gp2Label.className = 'font-bold text-emerald-300';
+            } else {
+                gp2Dot.className = 'w-2.5 h-2.5 rounded-full bg-slate-600 inline-block';
+                gp2Label.textContent = 'PS5 Pad 2: Off';
+                gp2Label.className = 'font-bold text-slate-400';
+            }
+
+            for (let idx = 0; idx < 2; idx++) {
+                const pad = pads[idx];
+                if (!pad || !pad.connected) continue;
+                const targetFighter = (idx === 0 && pad1TargetPlayer === 1) ? p1 : p2;
+                const prev = prevPadButtons[idx];
+
+                const isJustPressed = (bIndex) => {
+                    const pressed = !!(pad.buttons[bIndex] && pad.buttons[bIndex].pressed);
+                    const wasPressed = !!prev[bIndex];
+                    prev[bIndex] = pressed;
+                    return pressed && !wasPressed;
+                };
+
+                if (gameState === 'menu') {
+                    if (isJustPressed(0) || isJustPressed(9)) startMatch();
+                    if (isJustPressed(14)) selectCharacterByStep(idx === 0 ? pad1TargetPlayer : 2, -1);
+                    if (isJustPressed(15)) selectCharacterByStep(idx === 0 ? pad1TargetPlayer : 2, 1);
+                } else if (gameState === 'victory') {
+                    if (isJustPressed(0) || isJustPressed(9)) rematch();
+                } else if (gameState === 'fight') {
+                    if (isJustPressed(9)) { openPauseMenu(); continue; }
+                    if (targetFighter.canAct()) {
+                        // PS5 DualSense Mapping:
+                        // Square (2) = Light Punch, Triangle (3) = Heavy Kick, Cross (0) = Special/Launcher, R1 (5) / R2 (7) = Rage Art
+                        if (isJustPressed(2)) targetFighter.startAttack('lp');
+                        if (isJustPressed(3)) targetFighter.startAttack('hk');
+                        if (isJustPressed(0)) targetFighter.startAttack('special');
+                        const r2Held = !!(pad.buttons[7] && pad.buttons[7].value > 0.65);
+                        if (isJustPressed(5) || isJustPressed(7) || (r2Held && !prev['r2val'])) {
+                            targetFighter.startAttack('rage');
+                        }
+                        prev['r2val'] = r2Held;
+                    }
+                }
+            }
+
+            return {
+                p1Pad: pad1TargetPlayer === 1 ? pads[0] : null,
+                p2Pad: pad1TargetPlayer === 2 ? pads[0] : pads[1]
+            };
+        }
+
+        function getPlayerMovementInput(playerNum, pad) {
+            let moveX = 0, jump = false, crouch = false, block = false;
+
+            if (playerNum === 1) {
+                if (keysDown['KeyA'] || touchState.left) moveX -= 1;
+                if (keysDown['KeyD'] || touchState.right) moveX += 1;
+                if (keysDown['KeyW'] || touchState.up) jump = true;
+                if (keysDown['KeyS'] || touchState.down) crouch = true;
+                if (keysDown['KeyE'] || keysDown['ShiftLeft'] || touchState.block) block = true;
+            } else if (playerNum === 2 && gameMode === 'versus') {
+                if (keysDown['ArrowLeft']) moveX -= 1;
+                if (keysDown['ArrowRight']) moveX += 1;
+                if (keysDown['ArrowUp']) jump = true;
+                if (keysDown['ArrowDown']) crouch = true;
+                if (keysDown['KeyI'] || keysDown['ShiftRight']) block = true;
+            }
+
+            if (pad && pad.connected) {
+                const axisX = pad.axes[0] || 0;
+                const axisY = pad.axes[1] || 0;
+                if (axisX < -0.35 || (pad.buttons[14] && pad.buttons[14].pressed)) moveX = -1;
+                if (axisX > 0.35 || (pad.buttons[15] && pad.buttons[15].pressed)) moveX = 1;
+                if (axisY < -0.5 || (pad.buttons[12] && pad.buttons[12].pressed)) jump = true;
+                if (axisY > 0.5 || (pad.buttons[13] && pad.buttons[13].pressed)) crouch = true;
+                // Circle (1) or L1 (4) blocks
+                if ((pad.buttons[1] && pad.buttons[1].pressed) || (pad.buttons[4] && pad.buttons[4].pressed)) block = true;
+            }
+
+            return { moveX, jump, crouch, block };
+        }
+
+        /********************************************************************
+         * 9. AI CONTROLLER (EASY / NORMAL / HARD)
+         ********************************************************************/
+        let aiDecisionTimer = 0;
+        let aiCurrentAction = { moveX: 0, jump: false, crouch: false, block: false };
+
+        function updateAI(dt) {
+            if (gameMode === 'practice') {
+                if (dummyBehavior === 'stand') return { moveX: 0, jump: false, crouch: false, block: false };
+                if (dummyBehavior === 'block') return { moveX: 0, jump: false, crouch: false, block: true };
+            }
+
+            aiDecisionTimer -= dt;
+            const dist = Math.abs(p1.x - p2.x);
+            const dirToP1 = p1.x < p2.x ? -1 : 1;
+
+            if (aiDecisionTimer <= 0) {
+                const reactionRate = aiDifficulty === 'hard' ? 0.13 : (aiDifficulty === 'normal' ? 0.22 : 0.36);
+                aiDecisionTimer = reactionRate + Math.random() * 0.15;
+                aiCurrentAction = { moveX: 0, jump: false, crouch: false, block: false };
+
+                const blockChance = aiDifficulty === 'hard' ? 0.62 : (aiDifficulty === 'normal' ? 0.36 : 0.14);
+                if (p1.state === 'attack' && dist < 2.8 && Math.random() < blockChance) {
+                    aiCurrentAction.block = true;
+                    return aiCurrentAction;
+                }
+
+                if (dist > 2.15) {
+                    aiCurrentAction.moveX = dirToP1;
+                    if (dist > 4.6 && Math.random() < 0.22) aiCurrentAction.jump = true;
+                } else if (p2.canAct()) {
+                    const roll = Math.random();
+                    if ((p2.isRage || p2.energy >= 100) && roll < 0.35) {
+                        p2.startAttack('rage');
+                    } else if (roll < 0.56) {
+                        p2.startAttack('lp');
+                    } else if (roll < 0.80) {
+                        p2.startAttack('hk');
+                    } else {
+                        p2.startAttack('special');
+                    }
+                }
+            }
+            return aiCurrentAction;
+        }
+
+        /********************************************************************
+         * 10. CORE PHYSICS, ANIMATION & COMBAT RESOLUTION
+         ********************************************************************/
+        function triggerRageArtCinematic(fighter) {
+            rageCinemaTimer = 0.58;
+            rageActor = fighter;
+            slowMoFactor = 0.22;
+            cameraShake = 0.38;
+            document.getElementById('letterbox-top').style.height = '48px';
+            document.getElementById('letterbox-bottom').style.height = '48px';
+            showCenterBanner(fighter.data.specialName.toUpperCase(), `${fighter.data.name} RAGE ART!!`, 1000);
+            spawnHitSparks(fighter.x, fighter.y + 1.4, 0.2, fighter.data.colors.aura, 32, 1.5);
+            spawnShockwaveRing(fighter.x, fighter.y + 1.2, 0.2, fighter.data.colors.aura, 4.2);
+            sfx.playRageActivation();
+            sfx.announce('Rage Art!', 0.78, 1.0);
+            triggerGamepadRumble(fighter.playerIndex, 1.0, 0.85, 360);
+        }
+
+        function updateFighterPhysicsAndCombos(fighter, opponent, input, dt) {
+            fighter.animTime += dt;
+            if (fighter.invulnTimer > 0) fighter.invulnTimer -= dt;
+            if (fighter.comboWindow > 0) fighter.comboWindow -= dt;
+            if (fighter.comboResetTimer > 0) {
+                fighter.comboResetTimer -= dt;
+                if (fighter.comboResetTimer <= 0 && opponent.state !== 'hit' && opponent.y <= 0.01) {
+                    fighter.comboHits = 0;
+                    fighter.comboDamage = 0;
+                    updateComboHUD(fighter.playerIndex, 0, 0);
+                }
+            }
+
+            // Rage Mode activates when HP < 35%
+            const wasRage = fighter.isRage;
+            fighter.isRage = fighter.hp > 0 && fighter.hp < 35;
+            if (fighter.isRage && !wasRage) {
+                spawnShockwaveRing(fighter.x, 1.1, 0, 0x38bdf8, 3.2);
+                sfx.playRageActivation();
+                sfx.rageTempoBoost = true;
+            }
+
+            if (fighter.y <= 0.01 && fighter.state !== 'attack' && fighter.state !== 'knockdown') {
+                fighter.facing = fighter.x <= opponent.x ? 1 : -1;
+            }
+
+            if (fighter.state === 'hit' || fighter.state === 'knockdown') {
+                fighter.stateTimer -= dt;
+                if (fighter.stateTimer <= 0 && fighter.y <= 0.01) {
+                    if (fighter.state === 'knockdown') fighter.invulnTimer = 0.45;
+                    fighter.state = 'idle';
+                }
+            } else if (fighter.state === 'attack') {
+                const move = MOVE_DATA[fighter.currentMove] || MOVE_DATA.lp;
+                fighter.moveTimer += dt;
+                const totalDuration = move.startup + move.active + move.recovery;
+
+                if (!fighter.moveHasHit && fighter.moveTimer >= move.startup && fighter.moveTimer <= (move.startup + move.active)) {
+                    const hitReachX = fighter.x + fighter.facing * (move.range * 0.65);
+                    const distX = Math.abs(hitReachX - opponent.x);
+                    const distY = Math.abs((fighter.y + 1.1) - (opponent.y + 1.1));
+                    if (distX <= move.range * 0.72 && distY <= 1.55 && opponent.invulnTimer <= 0 && opponent.state !== 'knockdown') {
+                        fighter.moveHasHit = true;
+                        resolveAttackHit(fighter, opponent, move);
+                    }
+                }
+
+                if (fighter.moveTimer >= totalDuration) {
+                    fighter.state = 'idle';
+                    fighter.currentMove = null;
+                }
+            } else {
+                const holdingBack = (input.moveX !== 0) && (input.moveX === -fighter.facing);
+                if (input.block || (holdingBack && opponent.state === 'attack')) {
+                    fighter.state = 'block';
+                    fighter.vx = input.moveX * 2.1;
+                } else if (input.jump && fighter.y <= 0.01) {
+                    fighter.vy = 10.2;
+                    fighter.vx = input.moveX * 5.2;
+                    fighter.state = 'jump';
+                    sfx.playWhoosh();
+                } else if (input.crouch && fighter.y <= 0.01) {
+                    fighter.state = 'crouch';
+                    fighter.vx = 0;
+                } else if (input.moveX !== 0 && fighter.y <= 0.01) {
+                    fighter.state = 'walk';
+                    const speedMult = 0.82 + (fighter.data.stats.speed / 100) * 0.44;
+                    fighter.vx = input.moveX * 5.6 * speedMult;
+                } else if (fighter.y <= 0.01) {
+                    fighter.state = 'idle';
+                    fighter.vx = 0;
+                }
+            }
+
+            fighter.x += fighter.vx * dt;
+            if (fighter.state === 'attack' || fighter.state === 'hit' || fighter.state === 'knockdown') {
+                fighter.vx *= Math.pow(0.06, dt);
+            }
+
+            if (fighter.y > 0 || fighter.vy > 0) {
+                fighter.y += fighter.vy * dt;
+                fighter.vy -= 24.5 * dt;
+                if (fighter.y <= 0) {
+                    fighter.y = 0;
+                    fighter.vy = 0;
+                    if (fighter.state === 'jump') fighter.state = 'idle';
+                }
+            }
+
+            fighter.x = Math.max(-8.2, Math.min(8.2, fighter.x));
+            fighter.updateTransform();
+            animateFighterRig(fighter, dt);
+        }
+
+        function resolveAttackHit(attacker, defender, move) {
+            const isBlocked = defender.state === 'block' && attacker.currentMove !== 'rage';
+            const rageBonus = attacker.isRage ? 1.20 : 1.0;
+            const comboBonus = attacker.comboStep === 3 ? 1.25 : 1.0;
+
+            if (isBlocked) {
+                const chipDmg = Math.max(1, Math.round(move.dmg * 0.18));
+                defender.hp = Math.max(1, defender.hp - chipDmg);
+                defender.vx = attacker.facing * (move.knockback * 3.2);
+                attacker.energy = Math.min(100, attacker.energy + 4);
+                sfx.playBlock();
+                spawnHitSparks((attacker.x + defender.x) / 2, defender.y + 1.2, 0.2, 0x7dd3fc, 14, 0.9);
+                spawnFloatingDamageText(defender.x, defender.y + 1.9, 'GUARD', 'text-sky-300', 'text-lg');
+                triggerGamepadRumble(defender.playerIndex, 0.35, 0.2, 95);
+                return;
+            }
+
+            const finalDmg = Math.round(move.dmg * rageBonus * comboBonus * (attacker.data.stats.power / 90));
+            defender.hp = gameMode === 'practice' ? Math.max(15, defender.hp - finalDmg) : Math.max(0, defender.hp - finalDmg);
+
+            attacker.energy = Math.min(100, attacker.energy + move.heatGain);
+            defender.energy = Math.min(100, defender.energy + Math.round(move.heatGain * 0.6));
+
+            attacker.comboHits++;
+            attacker.comboDamage += finalDmg;
+            attacker.comboResetTimer = 1.35;
+            updateComboHUD(attacker.playerIndex, attacker.comboHits, attacker.comboDamage);
+
+            hitStopTimer = move.type === 'special' ? 0.11 : (move.type === 'heavy' ? 0.065 : 0.03);
+            cameraShake = move.type === 'special' ? 0.44 : (move.type === 'heavy' ? 0.22 : 0.08);
+
+            const isAirborneJuggle = defender.y > 0.05;
+            defender.vx = attacker.facing * (move.knockback * 4.8);
+            if (move.launchY > 0) {
+                defender.vy = isAirborneJuggle ? move.launchY * 0.78 : move.launchY;
+                defender.y = Math.max(0.05, defender.y);
+                defender.state = 'knockdown';
+                defender.stateTimer = 0.65;
+            } else if (isAirborneJuggle) {
+                defender.vy = 4.6;
+                defender.state = 'hit';
+                defender.stateTimer = 0.38;
+            } else {
+                defender.state = 'hit';
+                defender.stateTimer = move.hitStun;
+            }
+
+            const impactX = (attacker.x + defender.x) * 0.5;
+            const impactY = defender.y + 1.25;
+            spawnHitSparks(impactX, impactY, 0.25, attacker.data.colors.aura, move.type === 'special' ? 38 : 20, move.type === 'special' ? 1.55 : 1.05);
+            if (attacker.data.isWinterSkinActive) {
+                // Extra sparkling winter ice crystal burst
+                spawnHitSparks(impactX, impactY, 0.3, 0xffffff, move.type === 'special' ? 24 : 8, 1.15);
+            }
+            if (move.type === 'heavy' || move.type === 'special' || attacker.comboStep === 3) {
+                spawnShockwaveRing(impactX, impactY, 0.2, attacker.data.colors.aura, move.type === 'special' ? 4.0 : 2.3);
+            }
+
+            const popupColor = move.type === 'special' ? 'text-amber-300' : (move.type === 'heavy' ? 'text-cyan-300' : 'text-white');
+            const popupSize = move.type === 'special' ? 'text-3xl' : (move.type === 'heavy' ? 'text-2xl' : 'text-xl');
+            spawnFloatingDamageText(defender.x, defender.y + 2.0, `-${finalDmg} ${move.label}`, popupColor, popupSize);
+
+            sfx.playHit(move.type);
+            triggerGamepadRumble(attacker.playerIndex, move.type === 'special' ? 0.95 : 0.55, 0.4, 150);
+            triggerGamepadRumble(defender.playerIndex, 0.85, 0.6, 170);
+
+            if (defender.hp <= 0 && gameState === 'fight') {
+                triggerRoundKO(attacker, defender);
+            }
+        }
+
+        function animateFighterRig(f, dt) {
+            const r = f.rig;
+            const t = f.animTime;
+
+            r.shieldMat.opacity = f.state === 'block' ? 0.48 : 0.0;
+
+            if (f.isRage) {
+                r.auraRingMat.color.setHex(0xff003c);
+                r.auraRing.scale.setScalar(1.16 + Math.sin(t * 14) * 0.18);
+                if (Math.random() < 0.35) {
+                    spawnHitSparks(f.x + (Math.random() - 0.5) * 0.7, f.y + Math.random() * 1.6, 0, 0xff003c, 1, 0.65);
+                }
+            } else {
+                r.auraRingMat.color.setHex(f.data.colors.aura);
+                r.auraRing.scale.setScalar(1.0 + Math.sin(t * 5) * 0.06);
+            }
+
+            r.hips.position.y = 1.05;
+            r.hips.rotation.set(0, 0, 0);
+            r.torso.rotation.set(0, 0, 0);
+
+            if (f.state === 'idle') {
+                const breath = Math.sin(t * 5.5);
+                if (f.data.gender === 'girl') {
+                    r.hips.position.y = 1.06 + breath * 0.035;
+                    r.torso.rotation.z = -0.04;
+                    r.torso.rotation.y = 0.22;
+                    r.leftArm.rotation.set(0.38, 0, 1.32 + breath * 0.06);
+                    r.rightArm.rotation.set(-0.32, 0, 0.92 - breath * 0.06);
+                    r.leftLeg.rotation.set(0, 0, 0.18);
+                    r.rightLeg.rotation.set(0, 0, -0.22);
+                } else {
+                    r.hips.position.y = 1.05 + breath * 0.03;
+                    r.torso.rotation.z = -0.06;
+                    r.leftArm.rotation.set(0.3, 0, 0.95 + breath * 0.05);
+                    r.rightArm.rotation.set(-0.3, 0, 0.75 - breath * 0.05);
+                    r.leftLeg.rotation.set(0, 0, 0.15);
+                    r.rightLeg.rotation.set(0, 0, -0.18);
+                }
+            } else if (f.state === 'walk') {
+                const stride = Math.sin(t * 14);
+                r.hips.position.y = 1.05 + Math.abs(stride) * 0.05;
+                r.torso.rotation.z = -0.14;
+                r.leftLeg.rotation.set(0, 0, stride * 0.65);
+                r.rightLeg.rotation.set(0, 0, -stride * 0.65);
+                r.leftArm.rotation.set(0, 0, 0.7 - stride * 0.4);
+                r.rightArm.rotation.set(0, 0, 0.7 + stride * 0.4);
+            } else if (f.state === 'crouch') {
+                r.hips.position.y = 0.68;
+                r.torso.rotation.z = -0.25;
+                r.leftLeg.rotation.set(0, 0, 0.65);
+                r.rightLeg.rotation.set(0, 0, -0.65);
+                r.leftArm.rotation.set(0.2, 0, 1.1);
+                r.rightArm.rotation.set(-0.2, 0, 1.1);
+            } else if (f.state === 'block') {
+                r.torso.rotation.z = 0.12;
+                r.leftArm.rotation.set(0.35, 0, 1.45);
+                r.rightArm.rotation.set(-0.35, 0, 1.45);
+            } else if (f.state === 'jump') {
+                r.hips.position.y = 1.1;
+                r.leftLeg.rotation.set(0, 0, 0.45);
+                r.rightLeg.rotation.set(0, 0, -0.35);
+                r.leftArm.rotation.set(0, 0, 1.2);
+                r.rightArm.rotation.set(0, 0, 1.2);
+            } else if (f.state === 'attack') {
+                const m = f.currentMove;
+                if (m === 'lp') {
+                    r.torso.rotation.y = -0.35;
+                    r.leftArm.rotation.set(0, 0, 1.65);
+                    r.rightArm.rotation.set(0, 0, 0.5);
+                } else if (m === 'hk') {
+                    r.torso.rotation.z = 0.35;
+                    r.hips.rotation.y = f.moveTimer * 18;
+                    r.leftLeg.rotation.set(0, 0, 1.68);
+                } else if (m === 'special' || m === 'rage') {
+                    r.torso.rotation.z = -0.32;
+                    r.leftArm.rotation.set(0, 0, 2.05);
+                    r.rightArm.rotation.set(0, 0, 2.05);
+                    if (Math.random() < 0.65) {
+                        spawnHitSparks(f.x + f.facing * 0.8, f.y + 1.3, 0, f.data.colors.aura, 2, 0.9);
+                    }
+                }
+            } else if (f.state === 'hit') {
+                r.torso.rotation.z = 0.48;
+                r.leftArm.rotation.set(0, 0, 0.2);
+                r.rightArm.rotation.set(0, 0, 0.2);
+            } else if (f.state === 'knockdown') {
+                r.hips.position.y = 0.32;
+                r.hips.rotation.z = 1.48;
+            }
+        }
+
+        /********************************************************************
+         * 11. UI, SEASON TOGGLE & 25-FIGHTER ROSTER RENDERING
+         ********************************************************************/
+        function createRosterCard(char, idx) {
+            const isP1 = idx === p1CharIdx;
+            const isP2 = idx === p2CharIdx;
+            let borderClass = char.isWinterExclusive ? 'border-cyan-400/70' : 'border-slate-700/80';
+            if (isP1 && isP2) borderClass = 'selected-both';
+            else if (isP1) borderClass = 'selected-p1';
+            else if (isP2) borderClass = 'selected-p2';
+
+            const displayColors = (isWinterEdition && char.winterVariant) ? char.winterVariant.colors : char.colors;
+            const hexColor = '#' + displayColors.aura.toString(16).padStart(6, '0');
+            const hasWinterBadge = !!char.winterVariant || !!char.isWinterExclusive;
+
+            const card = document.createElement('div');
+            card.className = `char-card ${char.isWinterExclusive ? 'winter-exclusive-card' : ''} cursor-pointer rounded-lg p-1.5 border-2 ${borderClass} relative overflow-hidden flex flex-col justify-between`;
+            card.onclick = () => selectCharacter(activeSelectCursor, idx);
+            card.oncontextmenu = (e) => { e.preventDefault(); selectCharacter(2, idx); };
+
+            card.innerHTML = `
+                <div class="flex items-center justify-between gap-0.5">
+                    <span class="text-[8px] font-arcade font-bold uppercase px-1 rounded" style="background:${hexColor}22; color:${hexColor}; border:1px solid ${hexColor}66;">
+                        ${hasWinterBadge ? '❄️ ' : ''}${char.gender.toUpperCase()}
+                    </span>
+                    <div class="flex gap-0.5">
+                        ${isP1 ? '<span class="px-1 text-[8px] font-arcade font-black bg-cyan-400 text-slate-950 rounded">P1</span>' : ''}
+                        ${isP2 ? '<span class="px-1 text-[8px] font-arcade font-black bg-rose-500 text-white rounded">P2</span>' : ''}
+                    </div>
+                </div>
+                <div class="my-0.5">
+                    <div class="text-[11px] sm:text-xs font-arcade font-black text-white tracking-wide leading-tight truncate">${char.name}</div>
+                    <div class="text-[9px] font-bold text-sky-200/70 truncate">${(isWinterEdition && char.winterVariant) ? char.winterVariant.title : char.title}</div>
+                </div>
+            `;
+            return card;
+        }
+
+        function renderRosterGrid() {
+            const winterGrid = document.getElementById('winter-exclusive-grid');
+            const coreGrid = document.getElementById('roster-grid');
+            winterGrid.innerHTML = '';
+            coreGrid.innerHTML = '';
+
+            FIGHTERS.forEach((char, idx) => {
+                const card = createRosterCard(char, idx);
+                if (char.isWinterExclusive) winterGrid.appendChild(card);
+                else coreGrid.appendChild(card);
+            });
+
+            updatePreviewPanels();
+        }
+
+        function updatePreviewPanels() {
+            [ { f: p1, num: 1 }, { f: p2, num: 2 } ].forEach(({ f, num }) => {
+                const d = f.data;
+                const base = FIGHTERS[f.charIndex];
+                document.getElementById(`p${num}-select-name`).textContent = d.name;
+                document.getElementById(`p${num}-select-title`).textContent = d.title;
+                document.getElementById(`p${num}-style-badge`).textContent = d.style;
+                document.getElementById(`p${num}-select-desc`).textContent = d.desc;
+                document.getElementById(`p${num}-select-special`).textContent = d.specialName;
+                document.getElementById(`p${num}-stat-pow`).style.width = `${d.stats.power}%`;
+                document.getElementById(`p${num}-stat-spd`).style.width = `${d.stats.speed}%`;
+                document.getElementById(`p${num}-stat-rng`).style.width = `${d.stats.range}%`;
+
+                // Winter Edition Tag & Costume Toggle Button (for T.Koi, Yuika, Hanami)
+                const winterTag = document.getElementById(`p${num}-winter-tag`);
+                winterTag.classList.toggle('hidden', !d.isWinterSkinActive);
+
+                const skinBtn = document.getElementById(`p${num}-skin-toggle`);
+                if (base.winterVariant) {
+                    skinBtn.classList.remove('hidden');
+                    skinBtn.textContent = f.useWinterSkin ? '❄️ Winter Skin' : '🔥 Classic Skin';
+                } else {
+                    skinBtn.classList.add('hidden');
+                }
+
+                // Update Pedestal Light Color
+                const ringMat = num === 1 ? p1PedestalRingMat : p2PedestalRingMat;
+                const beamMat = num === 1 ? p1PedestalBeamMat : p2PedestalBeamMat;
+                if (ringMat) ringMat.color.setHex(d.colors.aura);
+                if (beamMat) beamMat.color.setHex(d.colors.aura);
+            });
+        }
+
+        function selectCharacter(playerNum, charIdx) {
+            sfx.playUIClick();
+            const f = playerNum === 1 ? p1 : p2;
+            if (playerNum === 1) p1CharIdx = charIdx;
+            else p2CharIdx = charIdx;
+
+            f.setCharacter(charIdx, isWinterEdition);
+            f.resetForRound();
+            f.previewYawOffset = 0;
+            triggerPreviewPose(playerNum, 'special');
+            sfx.announce(FIGHTERS[charIdx].name);
+            renderRosterGrid();
+        }
+
+        function toggleFighterWinterSkin(playerNum) {
+            const f = playerNum === 1 ? p1 : p2;
+            const base = FIGHTERS[f.charIndex];
+            if (!base.winterVariant) return;
+            sfx.playUIClick();
+            f.setCharacter(f.charIndex, !f.useWinterSkin);
+            f.resetForRound();
+            triggerPreviewPose(playerNum, 'special');
+            renderRosterGrid();
+        }
+
+        function triggerPreviewPose(playerNum, moveKey = 'special') {
+            const f = playerNum === 1 ? p1 : p2;
+            f.state = 'attack';
+            f.currentMove = moveKey;
+            f.moveTimer = 0;
+            f.moveHasHit = true;
+            spawnShockwaveRing(f.x, f.y + 1.15, 0.2, f.data.colors.aura, 2.3);
+            spawnHitSparks(f.x, f.y + 1.3, 0.3, f.data.colors.aura, 20, 1.15);
+            if (f.data.isWinterSkinActive) {
+                spawnHitSparks(f.x, f.y + 1.4, 0.35, 0xffffff, 14, 1.0);
+            }
+            sfx.playWhoosh();
+        }
+
+        function togglePreviewSpin(playerNum) {
+            const f = playerNum === 1 ? p1 : p2;
+            f.previewSpin = !f.previewSpin;
+            const btn = document.getElementById(`p${playerNum}-rot-btn`);
+            btn.className = f.previewSpin
+                ? 'px-1.5 py-0.5 rounded bg-cyan-400 text-slate-950 border border-white text-[10px] font-bold transition'
+                : 'px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-600 text-[10px] font-bold transition';
+            sfx.playUIClick();
+        }
+
+        function selectCharacterByStep(playerNum, delta) {
+            const current = playerNum === 1 ? p1CharIdx : p2CharIdx;
+            const next = (current + delta + FIGHTERS.length) % FIGHTERS.length;
+            selectCharacter(playerNum, next);
+        }
+
+        function toggleSeasonTheme() {
+            sfx.playUIClick();
+            isWinterEdition = !isWinterEdition;
+            document.body.classList.toggle('classic-theme', !isWinterEdition);
+            document.getElementById('menu-snow-layer').style.display = isWinterEdition ? 'block' : 'none';
+
+            const btn = document.getElementById('btn-season-toggle');
+            const badge = document.getElementById('season-banner-badge');
+            if (isWinterEdition) {
+                btn.textContent = '❄️ Winter Edition';
+                btn.className = 'px-3 py-1.5 rounded-xl font-arcade text-[11px] font-black transition bg-gradient-to-r from-sky-500 to-cyan-400 text-slate-950 shadow-[0_0_15px_rgba(56,189,248,0.6)] border border-white/60';
+                badge.textContent = '❄️ HALLO WINTER SCHOOL EDITION ❄️';
+                selectStage(0);
+                sfx.setBGMTrack(0);
+            } else {
+                btn.textContent = '🔥 Classic Edition';
+                btn.className = 'px-3 py-1.5 rounded-xl font-arcade text-[11px] font-black transition bg-gradient-to-r from-amber-500 to-red-600 text-white shadow-[0_0_15px_rgba(245,158,11,0.5)] border border-amber-300/60';
+                badge.textContent = '🔥 CLASSIC ARCADE EDITION 🔥';
+                selectStage(3);
+                sfx.setBGMTrack(2);
+            }
+
+            p1.setCharacter(p1CharIdx, isWinterEdition);
+            p2.setCharacter(p2CharIdx, isWinterEdition);
+            renderRosterGrid();
+        }
+
+        function setActiveSelectCursor(playerNum) {
+            activeSelectCursor = playerNum;
+            document.getElementById('cursor-btn-p1').className = playerNum === 1
+                ? 'px-2.5 py-0.5 rounded text-[11px] font-bold bg-cyan-400 text-slate-950 transition'
+                : 'px-2.5 py-0.5 rounded text-[11px] font-bold text-slate-200 hover:bg-slate-800 transition';
+            document.getElementById('cursor-btn-p2').className = playerNum === 2
+                ? 'px-2.5 py-0.5 rounded text-[11px] font-bold bg-rose-500 text-white transition'
+                : 'px-2.5 py-0.5 rounded text-[11px] font-bold text-slate-200 hover:bg-slate-800 transition';
+        }
+
+        function selectStage(idx) {
+            sfx.playUIClick();
+            selectedStage = idx;
+            buildArena(idx);
+            for (let i = 0; i < 4; i++) {
+                document.getElementById(`stage-btn-${i}`).className = i === idx
+                    ? 'px-2 py-1 rounded text-[10px] font-bold bg-cyan-400 text-slate-950 truncate shadow'
+                    : 'px-2 py-1 rounded text-[10px] font-bold bg-slate-900/90 text-sky-100 hover:bg-slate-800 truncate';
+            }
+        }
+
+        function setGameMode(mode) {
+            sfx.playUIClick();
+            gameMode = mode;
+            ['cpu', 'versus', 'practice'].forEach(m => {
+                document.getElementById(`mode-${m}`).className = m === mode
+                    ? 'px-2.5 py-1 rounded-lg font-arcade text-[11px] font-bold transition bg-cyan-500 text-slate-950 shadow-md'
+                    : 'px-2.5 py-1 rounded-lg font-arcade text-[11px] font-bold transition text-slate-300 hover:bg-slate-800';
+            });
+            document.getElementById('cpu-diff-box').style.display = mode === 'cpu' ? 'flex' : 'none';
+            document.getElementById('p2-header-tag').textContent = mode === 'versus' ? 'PLAYER 2' : (mode === 'practice' ? 'PRACTICE DUMMY' : 'CPU OPPONENT');
+        }
+
+        function updateAIDifficulty(val) { aiDifficulty = val; }
+
+        function randomizeFighters() {
+            p1CharIdx = Math.floor(Math.random() * FIGHTERS.length);
+            p2CharIdx = Math.floor(Math.random() * FIGHTERS.length);
+            p1.setCharacter(p1CharIdx, isWinterEdition);
+            p2.setCharacter(p2CharIdx, isWinterEdition);
+            p1.resetForRound();
+            p2.resetForRound();
+            triggerPreviewPose(1, 'special');
+            triggerPreviewPose(2, 'special');
+            renderRosterGrid();
+            sfx.announce('Random Select!');
+        }
+
+        function togglePad1Assignment() {
+            pad1TargetPlayer = pad1TargetPlayer === 1 ? 2 : 1;
+            document.getElementById('pad-assign-text').textContent = `P${pad1TargetPlayer}`;
+            sfx.playUIClick();
+        }
+
+        function toggleControlsModal() {
+            document.getElementById('controls-modal').classList.toggle('hidden');
+        }
+        function openPauseMenu() {
+            if (gameState === 'fight' || gameState === 'paused') toggleControlsModal();
+        }
+        function toggleTouchControls() {
+            const el = document.getElementById('touch-controls');
+            const isHidden = el.classList.toggle('hidden');
+            document.getElementById('btn-touch-toggle').textContent = isHidden ? '📱 Touch: OFF' : '📱 Touch: ON';
+        }
+
+        function triggerPracticeRefill() {
+            p1.hp = 100; p2.hp = 100; p1.energy = 100; p2.energy = 100;
+            updateFightHUD();
+        }
+        function triggerPracticeRage() {
+            p1.hp = 25; p1.energy = 100; p1.isRage = true;
+            updateFightHUD();
+        }
+        function toggleDummyAI() {
+            dummyBehavior = dummyBehavior === 'stand' ? 'block' : (dummyBehavior === 'block' ? 'fight' : 'stand');
+            document.getElementById('btn-dummy-ai').textContent =
+                dummyBehavior === 'stand' ? 'Dummy: Stand Still' : (dummyBehavior === 'block' ? 'Dummy: Auto-Guard' : 'Dummy: Sparring AI');
+        }
+
+        /********************************************************************
+         * 12. MATCH START, BEST-OF-3 ROUNDS & K.O. PRESENTATION
+         ********************************************************************/
+        function showCenterBanner(mainText, subText = '', duration = 1300) {
+            const banner = document.getElementById('center-banner');
+            document.getElementById('center-banner-main').textContent = mainText;
+            document.getElementById('center-banner-sub').textContent = subText;
+            banner.classList.remove('opacity-0', 'scale-90');
+            banner.classList.add('opacity-100', 'scale-100');
+            if (duration > 0) {
+                setTimeout(() => {
+                    banner.classList.remove('opacity-100', 'scale-100');
+                    banner.classList.add('opacity-0', 'scale-90');
+                }, duration);
+            }
+        }
+
+        function startMatch() {
+            sfx.init();
+            if (sfx.bgmTrackIdx === 1) {
+                sfx.setBGMTrack(isWinterEdition ? 0 : 2);
+            }
+            selectPedestalGroup.visible = false;
+            document.getElementById('menu-snow-layer').style.display = 'none';
+            document.getElementById('menu-screen').classList.add('hidden');
+            document.getElementById('victory-modal').classList.add('hidden');
+            const hud = document.getElementById('fight-hud');
+            hud.classList.remove('hidden');
+            hud.classList.add('flex');
+
+            document.getElementById('practice-toolbar').classList.toggle('hidden', gameMode !== 'practice');
+            document.getElementById('hud-p1-name').textContent = p1.data.name;
+            document.getElementById('hud-p2-name').textContent = p2.data.name;
+
+            p1.roundsWon = 0;
+            p2.roundsWon = 0;
+            roundNumber = 1;
+            startRound();
+        }
+
+        function startRound() {
+            p1.resetForRound();
+            p2.resetForRound();
+            sfx.rageTempoBoost = false;
+            roundTimer = gameMode === 'practice' ? 99 : 60;
+            roundTimerAccum = 0;
+            slowMoFactor = 1.0;
+            document.getElementById('letterbox-top').style.height = '0px';
+            document.getElementById('letterbox-bottom').style.height = '0px';
+
+            updateRoundOrbs();
+            updateFightHUD();
+            updateComboHUD(1, 0, 0);
+            updateComboHUD(2, 0, 0);
+
+            document.getElementById('hud-round-label').textContent = gameMode === 'practice' ? 'PRACTICE' : `ROUND ${roundNumber}`;
+
+            gameState = 'intro';
+            showCenterBanner(`ROUND ${roundNumber}`, `${p1.data.name} VS ${p2.data.name}`, 1450);
+            sfx.announce(`Round ${roundNumber}... Fight!`);
+
+            setTimeout(() => {
+                if (gameState === 'intro') {
+                    showCenterBanner('FIGHT!', isWinterEdition ? '❄️ HALLO WINTER SCHOOL EDITION ❄️' : 'UNLEASH YOUR IRON FIST', 900);
+                    gameState = 'fight';
+                }
+            }, 1300);
+        }
+
+        function triggerRoundKO(winner, loser) {
+            gameState = 'ko';
+            slowMoFactor = 0.25;
+            cameraShake = 0.55;
+            winner.roundsWon++;
+            updateRoundOrbs();
+
+            const isPerfect = winner.hp === 100;
+            showCenterBanner(isPerfect ? 'PERFECT K.O.!!' : 'K.O.!!', `${winner.data.name} TAKES THE ROUND`, 2200);
+            sfx.announce(isPerfect ? 'Perfect! K O!' : 'K O!', 0.78, 0.92);
+
+            setTimeout(() => {
+                slowMoFactor = 1.0;
+                if (winner.roundsWon >= 2) {
+                    triggerMatchVictory(winner);
+                } else {
+                    roundNumber++;
+                    startRound();
+                }
+            }, 2500);
+        }
+
+        function triggerMatchVictory(winner) {
+            gameState = 'victory';
+            sfx.announce(`${winner.data.name} Wins!`);
+            document.getElementById('victory-winner-name').textContent = `${winner.data.name} WINS!`;
+            document.getElementById('victory-winner-quote').textContent = winner.data.quote;
+            document.getElementById('victory-modal').classList.remove('hidden');
+        }
+
+        function rematch() {
+            sfx.playUIClick();
+            startMatch();
+        }
+
+        function returnToCharSelect() {
+            sfx.playUIClick();
+            sfx.rageTempoBoost = false;
+            gameState = 'menu';
+            selectPedestalGroup.visible = true;
+            document.getElementById('menu-snow-layer').style.display = isWinterEdition ? 'block' : 'none';
+            document.getElementById('victory-modal').classList.add('hidden');
+            document.getElementById('fight-hud').classList.add('hidden');
+            document.getElementById('fight-hud').classList.remove('flex');
+            document.getElementById('menu-screen').classList.remove('hidden');
+            p1.resetForRound();
+            p2.resetForRound();
+            sfx.announce('Choose your fighter!');
+        }
+
+        function updateRoundOrbs() {
+            const renderOrbs = (won) => {
+                let html = '';
+                for (let i = 0; i < 2; i++) {
+                    const active = i < won;
+                    html += `<div class="w-3.5 h-3.5 rounded-full border-2 border-cyan-300 ${active ? 'bg-amber-400 shadow-[0_0_10px_#f59e0b]' : 'bg-slate-900'}"></div>`;
+                }
+                return html;
+            };
+            document.getElementById('hud-p1-orbs').innerHTML = renderOrbs(p1.roundsWon);
+            document.getElementById('hud-p2-orbs').innerHTML = renderOrbs(p2.roundsWon);
+        }
+
+        function updateComboHUD(playerNum, hits, dmg) {
+            const el = document.getElementById(`hud-p${playerNum}-combo`);
+            if (hits >= 2) {
+                document.getElementById(`hud-p${playerNum}-combo-hits`).textContent = `${hits} HIT COMBO!`;
+                document.getElementById(`hud-p${playerNum}-combo-dmg`).textContent = `${dmg} TOTAL DAMAGE`;
+                el.classList.remove('opacity-0');
+                el.classList.add('opacity-100', 'scale-105');
+            } else {
+                el.classList.remove('opacity-100', 'scale-105');
+                el.classList.add('opacity-0');
+            }
+        }
+
+        function updateFightHUD() {
+            document.getElementById('hud-p1-hp').style.width = `${p1.hp}%`;
+            document.getElementById('hud-p1-hp-trail').style.width = `${p1.hp}%`;
+            document.getElementById('hud-p2-hp').style.width = `${p2.hp}%`;
+            document.getElementById('hud-p2-hp-trail').style.width = `${p2.hp}%`;
+
+            document.getElementById('hud-p1-energy').style.width = `${p1.energy}%`;
+            document.getElementById('hud-p1-energy-text').textContent = `RAGE ${Math.floor(p1.energy)}%`;
+            document.getElementById('hud-p2-energy').style.width = `${p2.energy}%`;
+            document.getElementById('hud-p2-energy-text').textContent = `${Math.floor(p2.energy)}% RAGE`;
+
+            document.getElementById('hud-p1-rage-badge').classList.toggle('hidden', !p1.isRage && p1.energy < 100);
+            document.getElementById('hud-p1-bar-frame').classList.toggle('rage-glow', p1.isRage);
+            document.getElementById('hud-p2-rage-badge').classList.toggle('hidden', !p2.isRage && p2.energy < 100);
+            document.getElementById('hud-p2-bar-frame').classList.toggle('rage-glow', p2.isRage);
+        }
+
+        /********************************************************************
+         * 13. MAIN GAME LOOP & DYNAMIC TEKKEN CAMERA SYSTEM
+         ********************************************************************/
+        let lastTime = performance.now();
+
+        function animate(now) {
+            requestAnimationFrame(animate);
+            const rawDt = Math.min((now - lastTime) / 1000, 0.05);
+            lastTime = now;
+
+            const { p1Pad, p2Pad } = pollGamepads();
+
+            // Animate 3D Snowflakes / Embers & Aurora Ribbons
+            floatingParticles3D.forEach(p => {
+                p.position.y += p.userData.speedY * rawDt;
+                p.position.x += Math.sin(now * 0.0018 + p.userData.phase) * 0.55 * rawDt;
+                if (p.userData.isSnow && p.position.y < 0.1) p.position.y = 10.2;
+                if (!p.userData.isSnow && p.position.y > 10.2) p.position.y = 0.2;
+            });
+
+            auroraRibbons.forEach(ribbon => {
+                ribbon.position.y = ribbon.userData.baseY + Math.sin(now * 0.0012 + ribbon.userData.offset) * 0.55;
+                ribbon.rotation.z = Math.sin(now * 0.0007 + ribbon.userData.offset) * 0.06;
+            });
+
+            // Update Hit Sparks & Shockwaves
+            for (let i = activeParticles.length - 1; i >= 0; i--) {
+                const p = activeParticles[i];
+                p.position.x += p.userData.vx * rawDt;
+                p.position.y += p.userData.vy * rawDt;
+                p.position.z += p.userData.vz * rawDt;
+                p.userData.vy -= 12.0 * rawDt;
+                p.userData.life -= rawDt;
+                p.scale.setScalar(Math.max(0.01, p.userData.life * 3.4));
+                if (p.userData.life <= 0) {
+                    scene.remove(p);
+                    activeParticles.splice(i, 1);
+                }
+            }
+
+            for (let i = activeShockwaves.length - 1; i >= 0; i--) {
+                const sw = activeShockwaves[i];
+                sw.scale.addScalar(sw.userData.scaleSpeed * rawDt);
+                sw.userData.life -= rawDt;
+                sw.material.opacity = Math.max(0, sw.userData.life * 3.5);
+                if (sw.userData.life <= 0) {
+                    scene.remove(sw);
+                    activeShockwaves.splice(i, 1);
+                }
+            }
+
+            if (rageCinemaTimer > 0) {
+                rageCinemaTimer -= rawDt;
+                if (rageCinemaTimer <= 0) {
+                    slowMoFactor = 1.0;
+                    rageActor = null;
+                    document.getElementById('letterbox-top').style.height = '0px';
+                    document.getElementById('letterbox-bottom').style.height = '0px';
+                }
+            }
+
+            if (hitStopTimer > 0) {
+                hitStopTimer -= rawDt;
+                renderer.render(scene, camera);
+                return;
+            }
+
+            const dt = rawDt * slowMoFactor;
+
+            if (gameState === 'menu') {
+                selectPedestalGroup.visible = true;
+                [p1, p2].forEach((f, idx) => {
+                    const isP1 = idx === 0;
+                    f.x = isP1 ? -2.35 : 2.35;
+                    f.y = 0.22;
+                    f.animTime += dt;
+
+                    if (f.state === 'attack' && f.currentMove) {
+                        const move = MOVE_DATA[f.currentMove] || MOVE_DATA.special;
+                        f.moveTimer += dt;
+                        if (f.moveTimer >= (move.startup + move.active + move.recovery)) {
+                            f.state = 'idle';
+                            f.currentMove = null;
+                        }
+                    }
+
+                    if (f.previewSpin) {
+                        f.previewYawOffset = (f.previewYawOffset + rawDt * 1.45) % (Math.PI * 2);
+                    }
+
+                    f.rig.root.position.set(f.x, f.y, 0);
+                    const baseAngle = isP1 ? 0.55 : (Math.PI - 0.55);
+                    const gentleSway = f.previewSpin ? 0 : Math.sin(now * 0.0012 + idx * 2) * 0.20;
+                    f.rig.root.rotation.y = baseAngle + gentleSway + f.previewYawOffset;
+                    animateFighterRig(f, dt);
+                });
+
+                camera.position.x = Math.sin(now * 0.0004) * 0.32;
+                camera.position.y = 2.08;
+                camera.position.z = 6.4;
+                camera.lookAt(0, 1.35, 0);
+            } else {
+                selectPedestalGroup.visible = false;
+                if (gameState === 'fight') {
+                    if (gameMode !== 'practice') {
+                        roundTimerAccum += rawDt;
+                        if (roundTimerAccum >= 1.0) {
+                            roundTimerAccum = 0;
+                            roundTimer = Math.max(0, roundTimer - 1);
+                            document.getElementById('hud-timer').textContent = roundTimer;
+                            if (roundTimer === 0) {
+                                const winner = p1.hp >= p2.hp ? p1 : p2;
+                                triggerRoundKO(winner, winner === p1 ? p2 : p1);
+                            }
+                        }
+                    } else {
+                        document.getElementById('hud-timer').textContent = '∞';
+                    }
+
+                    const p1Input = getPlayerMovementInput(1, p1Pad);
+                    const p2Input = gameMode === 'versus' ? getPlayerMovementInput(2, p2Pad) : updateAI(dt);
+
+                    updateFighterPhysicsAndCombos(p1, p2, p1Input, dt);
+                    updateFighterPhysicsAndCombos(p2, p1, p2Input, dt);
+
+                    // Fighter Pushbox Separation
+                    const minSep = 0.92;
+                    const dist = Math.abs(p1.x - p2.x);
+                    if (dist < minSep && Math.abs(p1.y - p2.y) < 1.2) {
+                        const overlap = (minSep - dist) * 0.5;
+                        if (p1.x <= p2.x) { p1.x -= overlap; p2.x += overlap; }
+                        else { p1.x += overlap; p2.x -= overlap; }
+                        p1.updateTransform();
+                        p2.updateTransform();
+                    }
+
+                    updateFightHUD();
+                } else {
+                    const emptyIn = { moveX: 0, jump: false, crouch: false, block: false };
+                    updateFighterPhysicsAndCombos(p1, p2, emptyIn, dt);
+                    updateFighterPhysicsAndCombos(p2, p1, emptyIn, dt);
+                }
+
+                const midX = rageActor ? rageActor.x : (p1.x + p2.x) * 0.5;
+                const midY = Math.max(1.35, (p1.y + p2.y) * 0.5 + 1.35);
+                const fighterDist = Math.abs(p1.x - p2.x);
+                const targetZ = rageActor ? 4.4 : Math.max(6.2, Math.min(11.8, fighterDist * 0.95 + 4.8));
+
+                camera.position.x += (midX - camera.position.x) * 8 * rawDt;
+                camera.position.y += ((midY + 0.9) - camera.position.y) * 6 * rawDt;
+                camera.position.z += (targetZ - camera.position.z) * 7 * rawDt;
+
+                if (cameraShake > 0) {
+                    camera.position.x += (Math.random() - 0.5) * cameraShake;
+                    camera.position.y += (Math.random() - 0.5) * cameraShake;
+                    cameraShake = Math.max(0, cameraShake - rawDt * 2.4);
+                }
+
+                camera.lookAt(midX, midY, 0);
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        window.onload = function () {
+            renderRosterGrid();
+            animate(performance.now());
+        };
+    </script>
+</body>
+</html>
